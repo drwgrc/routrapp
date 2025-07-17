@@ -1,0 +1,6 @@
+# Global
+*.env
+
+# Backend
+backend/.venv/
+backend/__pycache__/
