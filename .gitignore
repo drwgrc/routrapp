@@ -1,5 +1,9 @@
 # Global
 *.env
 
+# Sensitive configs
+backend/configs/config.dev.yaml
+backend/configs/config.prod.yaml
+
 # Docs
 docs/*

@@ -10,4 +10,15 @@ const (
 	
 	// CORS defaults
 	DefaultFrontendURL = "http://localhost:3000"
+
+	// Database defaults
+	DefaultDBHost        = "localhost"
+	DefaultDBPort        = "5432"
+	DefaultDBUser        = "postgres"
+	DefaultDBPassword    = "postgres"
+	DefaultDBName        = "routrapp"
+	DefaultDBSSLMode     = "disable"
+	DefaultDBMaxIdleConns = 10
+	DefaultDBMaxOpenConns = 100
+	DefaultDBConnMaxLife  = 30 // in seconds
 ) 
