@@ -1,25 +1,21 @@
-# Build stage
-FROM node:20-alpine AS builder
+# Development stage
+FROM node:20-alpine
 WORKDIR /app
+
+# Install dependencies
 COPY package*.json ./
 RUN npm ci
+
+# Copy source code
 COPY . .
-RUN npm run build
 
-# Production stage
-FROM node:20-alpine AS runner
-WORKDIR /app
-RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
-
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-
-RUN chown -R nextjs:nodejs /app
-USER nextjs
-
+# Expose port
 EXPOSE 3000
+
+# Set environment variables for development
+ENV NODE_ENV=development
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["node", "server.js"]
+# Run development server with Turbopack
+CMD ["npm", "run", "dev"]

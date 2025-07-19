@@ -9,6 +9,7 @@ import (
 
 type Config struct {
 	Server ServerConfig
+	CORS   CORSConfig
 }
 
 type ServerConfig struct {
@@ -17,12 +18,19 @@ type ServerConfig struct {
 	WriteTimeout time.Duration
 }
 
+type CORSConfig struct {
+	FrontendURL string
+}
+
 func Load() *Config {
 	return &Config{
 		Server: ServerConfig{
 			Port:         getEnv("PORT", constants.DefaultPort),
 			ReadTimeout:  constants.DefaultReadTimeout,
 			WriteTimeout: constants.DefaultWriteTimeout,
+		},
+		CORS: CORSConfig{
+			FrontendURL: getEnv("FRONTEND_URL", constants.DefaultFrontendURL),
 		},
 	}
 }

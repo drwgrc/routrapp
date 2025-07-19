@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"routrapp-api/internal/config"
+	"routrapp-api/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,6 +43,16 @@ func (a *App) setupServer() {
 
 func (a *App) setupRouter() {
 	a.router = gin.Default()
+	
+	// Add CORS middleware
+	a.router.Use(middleware.CORSMiddleware(a.config))
+	
+	// Root endpoint
+	a.router.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "routrapp-api",
+		})
+	})
 }
 
 func (a *App) Start() error {
