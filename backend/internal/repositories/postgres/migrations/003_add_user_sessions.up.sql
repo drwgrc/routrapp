@@ -1,0 +1,12 @@
+-- Migration: add user sessions
+-- Version: 3
+-- Created: 2025-07-19 00:08:59
+-- Direction: UP
+
+-- Add your SQL statements here to apply this migration
+-- Example:
+-- CREATE TABLE example_table (
+--     id SERIAL PRIMARY KEY,
+--     name VARCHAR(255) NOT NULL,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- );
