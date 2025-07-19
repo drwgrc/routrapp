@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,6 +9,7 @@ import (
 
 	"routrapp-api/internal/app"
 	"routrapp-api/internal/config"
+	"routrapp-api/internal/logger"
 )
 
 func main() {
@@ -19,14 +19,13 @@ func main() {
 	// Initialize application
 	application, err := app.NewApp(cfg)
 	if err != nil {
-		log.Fatal("❌ Failed to initialize application:", err)
+		logger.Fatalf("❌ Failed to initialize application: %v", err)
 	}
 
 	// Start server in a goroutine
 	go func() {
-		log.Printf("🚀 Starting server on port %s", cfg.Server.Port)
 		if err := application.Start(); err != nil {
-			log.Printf("❌ Server error: %v", err)
+			logger.Errorf("❌ Server error: %v", err)
 		}
 	}()
 
@@ -35,7 +34,7 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("🛑 Shutting down server...")
+	logger.Info("🛑 Shutting down server...")
 
 	// Create a deadline for server shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -43,8 +42,8 @@ func main() {
 
 	// Attempt graceful shutdown
 	if err := application.Shutdown(ctx); err != nil {
-		log.Fatal("❌ Server forced to shutdown:", err)
+		logger.Fatalf("❌ Server forced to shutdown: %v", err)
 	}
 
-	log.Println("👋 Server exited")
+	logger.Info("�� Server exited")
 }
