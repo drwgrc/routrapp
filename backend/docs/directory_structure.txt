@@ -1,0 +1,153 @@
+backend/
+├── cmd/
+│   └── api/
+│       └── main.go                     # Application entrypoint
+│
+├── internal/                           # Private application code
+│   ├── app/
+│   │   ├── app.go                      # Application setup and DI container
+│   │   └── router.go                   # Route registration
+│   │
+│   ├── config/
+│   │   ├── config.go                   # Configuration struct and loading
+│   │   └── database.go                 # Database connection setup
+│   │
+│   ├── domain/                         # Domain entities and interfaces
+│   │   ├── user.go                     # User domain entity and interfaces
+│   │   ├── technician.go               # Technician domain entity and interfaces
+│   │   ├── route.go                    # Route domain entity and interfaces
+│   │   └── errors.go                   # Domain-specific errors
+│   │
+│   ├── handlers/                       # HTTP handlers (controllers)
+│   │   ├── auth.go                     # Authentication endpoints
+│   │   ├── users.go                    # User management endpoints
+│   │   ├── technicians.go              # Technician CRUD endpoints
+│   │   ├── routes.go                   # Route CRUD endpoints
+│   │   ├── optimization.go             # Route optimization endpoints
+│   │   └── health.go                   # Health check endpoint
+│   │
+│   ├── services/                       # Business logic layer
+│   │   ├── interfaces.go               # Service interfaces
+│   │   ├── auth_service.go             # Authentication business logic
+│   │   ├── user_service.go             # User management logic
+│   │   ├── technician_service.go       # Technician management logic
+│   │   ├── route_service.go            # Route management logic
+│   │   ├── optimization_service.go     # Route optimization logic
+│   │   └── notification_service.go     # Notification handling
+│   │
+│   ├── repositories/                   # Data access layer
+│   │   ├── interfaces.go               # Repository interfaces
+│   │   ├── postgres/                   # PostgreSQL implementations
+│   │   │   ├── user_repository.go      # User data access
+│   │   │   ├── technician_repository.go # Technician data access
+│   │   │   ├── route_repository.go     # Route data access
+│   │   │   └── migrations/             # Database migrations
+│   │   │       ├── 001_initial.up.sql
+│   │   │       ├── 001_initial.down.sql
+│   │   │       ├── 002_add_routes.up.sql
+│   │   │       └── 002_add_routes.down.sql
+│   │   └── cache/                      # Redis/memory cache implementations
+│   │       ├── user_cache.go
+│   │       └── route_cache.go
+│   │
+│   ├── models/                         # Database models/DTOs
+│   │   ├── user.go                     # User database models
+│   │   ├── technician.go               # Technician database models
+│   │   ├── route.go                    # Route database models
+│   │   └── base.go                     # Common model fields
+│   │
+│   ├── dto/                           # Data Transfer Objects
+│   │   ├── auth.go                     # Auth request/response DTOs
+│   │   ├── user.go                     # User DTOs
+│   │   ├── technician.go               # Technician DTOs
+│   │   ├── route.go                    # Route DTOs
+│   │   └── common.go                   # Common response DTOs
+│   │
+│   ├── middleware/                     # HTTP middleware
+│   │   ├── auth.go                     # JWT authentication
+│   │   ├── tenant.go                   # Multi-tenant context
+│   │   ├── cors.go                     # CORS configuration
+│   │   ├── logging.go                  # Request logging
+│   │   └── rate_limit.go               # Rate limiting
+│   │
+│   ├── integrations/                   # External service integrations
+│   │   ├── interfaces.go               # Integration interfaces
+│   │   ├── googlemaps/                 # Google Maps API client
+│   │   │   ├── client.go
+│   │   │   ├── optimization.go
+│   │   │   └── geocoding.go
+│   │   └── notifications/              # Notification providers
+│   │       ├── email.go
+│   │       └── sms.go
+│   │
+│   ├── utils/                          # Utility packages
+│   │   ├── auth/                       # Auth utilities
+│   │   │   ├── jwt.go                  # JWT handling
+│   │   │   └── password.go             # Password hashing
+│   │   ├── validation/                 # Validation utilities
+│   │   │   ├── email.go
+│   │   │   ├── phone.go
+│   │   │   └── coordinates.go
+│   │   ├── pagination/                 # Pagination helpers
+│   │   │   └── pagination.go
+│   │   ├── constants/                  # Application constants
+│   │   │   └── constants.go
+│   │   └── logger/                     # Logging utilities
+│   │       └── logger.go
+│   │
+│   └── tests/                          # Internal tests
+│       ├── fixtures/                   # Test data fixtures
+│       │   ├── users.json
+│       │   ├── technicians.json
+│       │   └── routes.json
+│       ├── mocks/                      # Generated mocks
+│       │   ├── user_service_mock.go
+│       │   ├── user_repository_mock.go
+│       │   └── notification_service_mock.go
+│       ├── integration/                # Integration tests
+│       │   ├── auth_test.go
+│       │   ├── technicians_test.go
+│       │   └── routes_test.go
+│       └── unit/                       # Unit tests
+│           ├── services/
+│           │   ├── user_service_test.go
+│           │   ├── technician_service_test.go
+│           │   └── route_service_test.go
+│           └── repositories/
+│               ├── user_repository_test.go
+│               └── route_repository_test.go
+│
+├── pkg/                               # Public library code (if needed)
+│   └── client/                        # API client library
+│       ├── client.go
+│       └── types.go
+│
+├── api/                               # API specifications
+│   ├── openapi.yaml                   # OpenAPI/Swagger specification
+│   └── proto/                         # Protocol buffer files (if using gRPC)
+│       └── route_service.proto
+│
+├── configs/                           # Configuration files
+│   ├── config.yaml                    # Default configuration
+│   ├── config.dev.yaml               # Development configuration
+│   └── config.prod.yaml              # Production configuration
+│
+├── scripts/                           # Build and deployment scripts
+│   ├── build.sh                       # Build script
+│   ├── migrate.sh                     # Database migration script
+│   ├── test.sh                        # Test runner script
+│   └── docker/                        # Docker-related scripts
+│       ├── Dockerfile
+│       └── docker-compose.yml
+│
+├── docs/                              # Documentation
+│   ├── api.md                         # API documentation
+│   ├── deployment.md                  # Deployment guide
+│   └── development.md                 # Development setup
+│
+├── go.mod                             # Go module definition
+├── go.sum                             # Go module checksums
+├── .env.example                       # Environment variables example
+├── .gitignore                         # Git ignore file
+├── Makefile                           # Build automation
+└── README.md                          # Project documentation
