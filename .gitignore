@@ -1,6 +1,5 @@
 # Global
 *.env
 
-# Backend
-backend/.venv/
-backend/__pycache__/
+# Docs
+docs/*
