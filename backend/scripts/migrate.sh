@@ -1,85 +1,77 @@
 #!/bin/bash
 
-# Database Migration Script
-# A wrapper for the Go migration tool
+# Set environment variables if not already set
+: ${DB_HOST:="localhost"}
+: ${DB_PORT:="5432"}
+: ${DB_USER:="postgres"}
+: ${DB_PASSWORD:="postgres"}
+: ${DB_NAME:="routrapp"}
+: ${DB_SSL_MODE:="disable"}
 
-set -e
+# Create migrations directory if it doesn't exist
+MIGRATIONS_DIR="$(dirname "$0")/../internal/repositories/postgres/migrations"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-
-echo -e "${BLUE}🗄️  Database Migration Tool${NC}"
-echo "================================"
-
-# Check if we're in the backend directory
-if [[ ! -f "$PROJECT_ROOT/go.mod" ]]; then
-    echo -e "${RED}Error: This script must be run from the backend directory${NC}"
-    echo "Current directory: $(pwd)"
-    echo "Expected: $PROJECT_ROOT"
+# Check if migrations directory exists
+if [ ! -d "$MIGRATIONS_DIR" ]; then
+    echo "Migrations directory not found: $MIGRATIONS_DIR"
     exit 1
 fi
 
-# Change to project root
-cd "$PROJECT_ROOT"
-
-# If no arguments provided, show usage
-if [[ $# -eq 0 ]]; then
-    echo -e "${YELLOW}Usage:${NC}"
-    echo "  $0 create <migration_name>    # Create new migration"
-    echo "  $0 validate                   # Validate all migrations"
-    echo "  $0 status                     # Show migration status"
-    echo ""
-    echo -e "${YELLOW}Examples:${NC}"
-    echo "  $0 create \"add user sessions\""
-    echo "  $0 validate"
-    echo "  $0 status"
-    echo ""
-    exit 0
+# Check if migrate command is available
+if ! command -v migrate &> /dev/null; then
+    echo "migrate command not found. Installing golang-migrate..."
+    if [ "$(uname)" == "Darwin" ]; then
+        # macOS
+        brew install golang-migrate
+    elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+        # Linux
+        curl -L https://github.com/golang-migrate/migrate/releases/download/v4.16.2/migrate.linux-amd64.tar.gz | tar xvz
+        sudo mv migrate /usr/local/bin/
+    else
+        echo "Unsupported OS. Please install golang-migrate manually: https://github.com/golang-migrate/migrate/tree/master/cmd/migrate"
+        exit 1
+    fi
 fi
 
-# Parse command
-COMMAND="$1"
+# Build connection string
+DB_URL="postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSL_MODE}"
+
+# Parse command (up, down, create, etc.)
+CMD=$1
 shift
 
-case "$COMMAND" in
+# Execute migration command
+case "$CMD" in
+    "up")
+        echo "Running migrations up..."
+        migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" up "$@"
+        ;;
+    "down")
+        echo "Running migrations down..."
+        migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" down "$@"
+        ;;
     "create")
-        if [[ $# -eq 0 ]]; then
-            echo -e "${RED}Error: Migration name is required${NC}"
-            echo "Usage: $0 create <migration_name>"
-            exit 1
-        fi
-        MIGRATION_NAME="$1"
-        echo -e "${GREEN}Creating migration: $MIGRATION_NAME${NC}"
-        go run scripts/migrate.go -action=create -name="$MIGRATION_NAME"
+        echo "Creating migration..."
+        migrate create -ext sql -dir "$MIGRATIONS_DIR" -seq "$@"
         ;;
-    
-    "validate")
-        echo -e "${GREEN}Validating migrations...${NC}"
-        go run scripts/migrate.go -action=validate
+    "version")
+        echo "Current migration version:"
+        migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" version
         ;;
-    
-    "status")
-        echo -e "${GREEN}Checking migration status...${NC}"
-        go run scripts/migrate.go -action=status
+    "force")
+        echo "Forcing migration version..."
+        migrate -path "$MIGRATIONS_DIR" -database "$DB_URL" force "$@"
         ;;
-    
-    "help"|"-h"|"--help")
-        go run scripts/migrate.go
-        ;;
-    
     *)
-        echo -e "${RED}Error: Unknown command '$COMMAND'${NC}"
-        echo "Run '$0' without arguments to see usage information"
+        echo "Usage: $0 <up|down|create|version|force> [args]"
+        echo "Examples:"
+        echo "  $0 up             # Apply all migrations"
+        echo "  $0 up 1           # Apply 1 migration"
+        echo "  $0 down           # Revert last migration"
+        echo "  $0 down 2         # Revert last 2 migrations"
+        echo "  $0 create my_migration # Create a new migration"
+        echo "  $0 version        # Show current migration version"
+        echo "  $0 force 1        # Force migration version"
         exit 1
         ;;
-esac
-
-echo -e "${GREEN}✅ Done!${NC}" 
+esac 

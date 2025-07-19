@@ -1,6 +1,9 @@
 # Global
 *.env
 
-# Backend
-backend/.venv/
-backend/__pycache__/
+# Sensitive configs
+backend/configs/config.dev.yaml
+backend/configs/config.prod.yaml
+
+# Docs
+docs/*
