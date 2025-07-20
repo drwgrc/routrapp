@@ -17,7 +17,6 @@ type Technician struct {
 	Base
 	UserID         uint             `gorm:"uniqueIndex" json:"user_id"`
 	User           User             `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	TenantID       uint             `gorm:"index" json:"tenant_id"`
 	Status         TechnicianStatus `gorm:"type:varchar(20);default:'inactive'" json:"status"`
 	PhoneNumber    string           `gorm:"type:varchar(20)" json:"phone_number"`
 	CurrentLat     *float64         `json:"current_lat,omitempty"`

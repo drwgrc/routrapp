@@ -20,7 +20,6 @@ type Route struct {
 	Base
 	Name          string      `gorm:"type:varchar(100)" json:"name"`
 	Description   string      `gorm:"type:text" json:"description,omitempty"`
-	TenantID      uint        `gorm:"index" json:"tenant_id"`
 	TechnicianID  *uint       `gorm:"index" json:"technician_id,omitempty"`
 	Technician    *Technician `gorm:"foreignKey:TechnicianID" json:"technician,omitempty"`
 	Status        RouteStatus `gorm:"type:varchar(20);default:'pending'" json:"status"`
@@ -39,7 +38,6 @@ type Route struct {
 type RouteStop struct {
 	Base
 	RouteID      uint       `gorm:"index" json:"route_id"`
-	TenantID     uint       `gorm:"index" json:"tenant_id"`
 	Name         string     `gorm:"type:varchar(100)" json:"name"`
 	Address      string     `gorm:"type:varchar(255)" json:"address"`
 	Lat          float64    `json:"lat"`
@@ -66,7 +64,6 @@ type RouteActivity struct {
 	Base
 	RouteID      uint      `gorm:"index" json:"route_id"`
 	RouteStopID  *uint     `gorm:"index" json:"route_stop_id,omitempty"`
-	TenantID     uint      `gorm:"index" json:"tenant_id"`
 	TechnicianID uint      `gorm:"index" json:"technician_id"`
 	ActivityType string    `gorm:"type:varchar(50)" json:"activity_type"`
 	Notes        string    `gorm:"type:text" json:"notes,omitempty"`
