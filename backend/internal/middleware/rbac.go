@@ -163,29 +163,80 @@ func RequirePermissionWithChecker(permission string, checker PermissionChecker) 
 // RequireAnyPermission creates middleware that requires any one of the specified permissions
 func RequireAnyPermission(permissions ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Always require authentication, even if no specific permissions are specified
+		userID, exists := GetUserID(c)
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusUnauthorized,
+					"Authentication required",
+					map[string]interface{}{
+						"code": "AUTHENTICATION_REQUIRED",
+					},
+				),
+			})
+			return
+		}
+
+		organizationID, exists := GetOrganizationID(c)
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusUnauthorized,
+					"Organization context required",
+					map[string]interface{}{
+						"code": "ORGANIZATION_REQUIRED",
+					},
+				),
+			})
+			return
+		}
+
+		userRole, exists := GetUserRole(c)
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusUnauthorized,
+					"User role not found",
+					map[string]interface{}{
+						"code": "MISSING_USER_ROLE",
+					},
+				),
+			})
+			return
+		}
+
+		// If no permissions specified, allow any authenticated user
 		if len(permissions) == 0 {
 			c.Next()
 			return
 		}
 
+		// Convert role string to role ID for checker
+		var roleID uint
+		switch userRole {
+		case "owner":
+			roleID = 1
+		case "technician":
+			roleID = 2
+		default:
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusForbidden,
+					"Unknown user role",
+					map[string]interface{}{
+						"code": "UNKNOWN_ROLE",
+						"role": userRole,
+					},
+				),
+			})
+			return
+		}
+
+		checker := &DefaultPermissionChecker{}
+
 		// Check each permission until one is found
 		for _, permission := range permissions {
-			// Use the permission checker
-			userID, _ := GetUserID(c)
-			organizationID, _ := GetOrganizationID(c)
-			userRole, _ := GetUserRole(c)
-
-			var roleID uint
-			switch userRole {
-			case "owner":
-				roleID = 1
-			case "technician":
-				roleID = 2
-			default:
-				continue
-			}
-
-			checker := &DefaultPermissionChecker{}
 			if checker.HasPermission(roleID, userID, organizationID, permission) {
 				// User has this permission, continue
 				c.Next()
@@ -201,6 +252,7 @@ func RequireAnyPermission(permissions ...string) gin.HandlerFunc {
 				map[string]interface{}{
 					"code":                 "INSUFFICIENT_PERMISSIONS",
 					"required_permissions": permissions,
+					"user_role":           userRole,
 				},
 			),
 		})
