@@ -152,7 +152,9 @@ export default function LogoutPage() {
               <div className="bg-muted rounded-lg p-4 space-y-2">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
-                    {user.first_name.charAt(0).toUpperCase()}
+                    {(user.first_name || user.last_name || user.email || "U")
+                      .charAt(0)
+                      .toUpperCase()}
                   </div>
                   <div>
                     <p className="font-medium">
