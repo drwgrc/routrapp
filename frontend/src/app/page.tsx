@@ -46,9 +46,9 @@ export default function Home() {
       try {
         setApiStatus(prev => ({ ...prev, loading: true, error: null }));
         const apiBaseUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-        const apiVersion = process.env.NEXT_PUBLIC_API_VERSION || "1";
-        const response = await fetch(`${apiBaseUrl}/api/${apiVersion}/health`);
+          process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:8080";
+        const apiVersion = process.env.NEXT_PUBLIC_API_VERSION || "v1";
+        const response = await fetch(`${apiBaseUrl}/${apiVersion}/health`);
         setApiStatus({
           status: response.status,
           loading: false,
