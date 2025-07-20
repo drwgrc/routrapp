@@ -45,7 +45,9 @@ export default function Home() {
     const checkApiStatus = async () => {
       try {
         setApiStatus(prev => ({ ...prev, loading: true, error: null }));
-        const response = await fetch("http://localhost:8080/api/v1/health");
+        const apiBaseUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
+        const response = await fetch(`${apiBaseUrl}/api/v1/health`);
         setApiStatus({
           status: response.status,
           loading: false,
