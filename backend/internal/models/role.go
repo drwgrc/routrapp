@@ -66,7 +66,7 @@ func (r RoleType) IsValid() bool {
 // Role represents a user role with specific permissions
 type Role struct {
 	Base
-	Name        RoleType `gorm:"type:varchar(20);not null;uniqueIndex:idx_role_org_name" json:"name"`
+	Name        RoleType `gorm:"type:varchar(20);not null" json:"name"`
 	DisplayName string   `gorm:"type:varchar(100);not null" json:"display_name"`
 	Description string   `gorm:"type:text" json:"description,omitempty"`
 	Permissions string   `gorm:"type:text" json:"permissions,omitempty"` // JSON array of permissions
@@ -79,6 +79,13 @@ type Role struct {
 // TableName returns the table name for Role
 func (Role) TableName() string {
 	return "roles"
+}
+
+// Indexes returns the database indexes for the Role model
+func (Role) Indexes() []string {
+	return []string{
+		"CREATE UNIQUE INDEX IF NOT EXISTS idx_roles_org_name ON roles(organization_id, name) WHERE deleted_at IS NULL",
+	}
 }
 
 // HasPermission checks if the role has a specific permission
