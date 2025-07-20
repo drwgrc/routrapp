@@ -1,13 +1,13 @@
 # RoutRapp
 
-A modern web application built with FastAPI backend and Next.js frontend.
+A modern web application built with Go/Gin backend and Next.js frontend.
 
 ## Project Overview
 
 RoutRapp is a full-stack web application featuring:
 
-- **Backend**: FastAPI-based REST API with Python
-- **Frontend**: Next.js15ith React 19peScript, and Tailwind CSS
+- **Backend**: Gin-based REST API with Go
+- **Frontend**: Next.js with React, TypeScript, and Tailwind CSS
 - **Modern Stack**: Built with the latest technologies for optimal performance and developer experience
 
 ## Project Structure
@@ -15,7 +15,7 @@ RoutRapp is a full-stack web application featuring:
 ```
 routrapp/
 ├── backend/
-│   └── main.py          # FastAPI application entry point
+│   └── cmd/api/main.go    # Gin application entry point
 ├── frontend/
 │   ├── src/
 │   │   └── app/         # Next.js app directory
@@ -28,42 +28,38 @@ routrapp/
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** (v18higher)
-- **Python** (v30.8or higher)
-- **pip** (Python package manager)
+- **Node.js** (v18 or higher)
+- **Go** (v1.16 or higher)
 
 ## Setup Instructions
 
-### Backend Setup1 **Navigate to the backend directory:**
+### Backend Setup
+
+1. **Navigate to the backend directory:**
 
 ```bash
 cd backend
 ```
 
-2. **Create a virtual environment (recommended):**
+2. **Install Go dependencies:**
 
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-   3 **Install FastAPI and dependencies:**
-
-   ```bash
-   pip install fastapi uvicorn
+   go mod tidy
    ```
 
 3. **Run the backend server:**
 
-   ````bash
-   uvicorn main:app --reload --host 0.00port 80   ```
+   ```bash
+   go run cmd/api/main.go
+   ```
 
    The API will be available at `http://localhost:8080`
-   - API documentation: `http://localhost:8080/docs`
-   - Alternative docs: `http://localhost:8080/redoc`
-   ````
 
-### Frontend Setup1 **Navigate to the frontend directory:**
+   - API documentation: `http://localhost:8080/swagger/index.html`
+
+### Frontend Setup
+
+1. **Navigate to the frontend directory:**
 
 ```bash
 cd frontend
@@ -81,11 +77,14 @@ cd frontend
    npm run dev
    ```
 
-   The frontend will be available at `http://localhost:30# Available Scripts
+   The frontend will be available at `http://localhost:3000`
+
+## Available Scripts
 
 ### Backend
 
-- `uvicorn main:app --reload` - Start development server with auto-reload
+- `go run cmd/api/main.go` - Start development server
+- `go test ./...` - Run all tests
 
 ### Frontend
 
@@ -98,22 +97,22 @@ cd frontend
 
 The backend currently provides these endpoints:
 
-- `GET /` - Returns a simple "Hello World message
+- `GET /` - Returns a simple "Hello World" message
 - `GET /items/{item_id}` - Returns item information with optional query parameter
 
 ## Development
 
 ### Backend Development
 
-- The backend uses FastAPI for rapid API development
-- Auto-generated API documentation is available at `/docs`
-- Hot reload is enabled for development
+- The backend uses Gin for rapid API development
+- Swagger documentation is available at `/swagger/index.html`
+- Configuration through environment variables
 
 ### Frontend Development
 
-- Built with Next.js15nd React 19
+- Built with Next.js and React
 - Uses TypeScript for type safety
-- Styled with Tailwind CSS v4
+- Styled with Tailwind CSS
 - ESLint configured for code quality
 
 ## Contributing

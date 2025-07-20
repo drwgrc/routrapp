@@ -1,17 +1,10 @@
--- Drop indices
-DROP INDEX IF EXISTS idx_routes_deleted_at;
-DROP INDEX IF EXISTS idx_technicians_deleted_at;
-DROP INDEX IF EXISTS idx_tenants_deleted_at;
-DROP INDEX IF EXISTS idx_users_deleted_at;
-DROP INDEX IF EXISTS idx_routes_date;
-DROP INDEX IF EXISTS idx_routes_tenant_id;
-DROP INDEX IF EXISTS idx_routes_technician_id;
-DROP INDEX IF EXISTS idx_technicians_tenant_id;
-DROP INDEX IF EXISTS idx_technicians_user_id;
-DROP INDEX IF EXISTS idx_users_email;
+-- Migration: initial
+-- Version: 1
+-- Created: 2025-01-17 12:00:00
+-- Direction: DOWN
 
--- Drop tables (in reverse order of creation to handle references)
-DROP TABLE IF EXISTS routes;
-DROP TABLE IF EXISTS technicians;
-DROP TABLE IF EXISTS tenants;
-DROP TABLE IF EXISTS users; 
+-- Drop tables in reverse order of creation to handle dependencies
+DROP TABLE IF EXISTS routes CASCADE;
+DROP TABLE IF EXISTS technicians CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS organizations CASCADE; 

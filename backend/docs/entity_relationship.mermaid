@@ -1,0 +1,89 @@
+erDiagram
+    ORGANIZATIONS ||--o{ USERS : has
+    ORGANIZATIONS ||--o{ TECHNICIANS : has
+    ORGANIZATIONS ||--o{ ROUTES : has
+    ORGANIZATIONS ||--o{ ROUTE_STOPS : has
+    ORGANIZATIONS ||--o{ ROUTE_ACTIVITIES : has
+    ORGANIZATIONS ||--o{ USER_SESSIONS : has
+    
+    USERS ||--o{ USER_SESSIONS : has
+    USERS ||--|| TECHNICIANS : becomes
+    TECHNICIANS ||--o{ ROUTES : assigned_to
+    ROUTES ||--o{ ROUTE_STOPS : contains
+    ROUTES ||--o{ ROUTE_ACTIVITIES : records
+    TECHNICIANS ||--o{ ROUTE_ACTIVITIES : performs
+
+    ORGANIZATIONS {
+        id SERIAL PK
+        name VARCHAR(100)
+        sub_domain VARCHAR(100)
+        contact_email VARCHAR(100)
+        contact_phone VARCHAR(20)
+        logo_url VARCHAR(255)
+        active BOOLEAN
+        plan_type VARCHAR(20)
+    }
+    
+    USERS {
+        id SERIAL PK
+        organization_id INTEGER FK
+        email VARCHAR(255)
+        password_hash VARCHAR(255)
+        first_name VARCHAR(100)
+        last_name VARCHAR(100)
+        role VARCHAR(50)
+        refresh_token VARCHAR(255)
+        active BOOLEAN
+    }
+    
+    TECHNICIANS {
+        id SERIAL PK
+        organization_id INTEGER FK
+        user_id INTEGER FK
+        status VARCHAR(20)
+        phone_number VARCHAR(20)
+        current_lat DECIMAL
+        current_lng DECIMAL
+    }
+    
+    ROUTES {
+        id SERIAL PK
+        organization_id INTEGER FK
+        name VARCHAR(100)
+        technician_id INTEGER FK
+        status VARCHAR(20)
+        scheduled_date TIMESTAMP
+        total_distance DECIMAL
+        total_duration INTEGER
+    }
+    
+    ROUTE_STOPS {
+        id SERIAL PK
+        organization_id INTEGER FK
+        route_id INTEGER FK
+        name VARCHAR(100)
+        address VARCHAR(255)
+        lat DECIMAL
+        lng DECIMAL
+        sequence_num INTEGER
+        is_completed BOOLEAN
+    }
+    
+    ROUTE_ACTIVITIES {
+        id SERIAL PK
+        organization_id INTEGER FK
+        route_id INTEGER FK
+        route_stop_id INTEGER FK
+        technician_id INTEGER FK
+        activity_type VARCHAR(50)
+        timestamp TIMESTAMP
+    }
+    
+    USER_SESSIONS {
+        id SERIAL PK
+        organization_id INTEGER FK
+        user_id INTEGER FK
+        refresh_token VARCHAR(255)
+        expires_at TIMESTAMP
+        is_valid BOOLEAN
+    }
