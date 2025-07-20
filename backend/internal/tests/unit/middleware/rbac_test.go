@@ -64,15 +64,10 @@ func TestPermissionMatches(t *testing.T) {
 	
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Note: This function is not exported from middleware package, 
-			// so we test it through the public API
-			checker := &middleware.DefaultPermissionChecker{}
-			
-			// Test permission matching through the public interface
-			// We'll test the logic indirectly through HasPermission
-			ownerResult := checker.HasPermission(1, 123, 456, "organizations.read")
-			if !ownerResult {
-				t.Errorf("Expected owner to have organizations.read permission")
+			// Test the exported PermissionMatches function directly
+			result := middleware.PermissionMatches(tt.stored, tt.requested)
+			if result != tt.expected {
+				t.Errorf("PermissionMatches(%q, %q) = %v, want %v", tt.stored, tt.requested, result, tt.expected)
 			}
 		})
 	}

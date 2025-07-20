@@ -36,7 +36,7 @@ func (dpc *DefaultPermissionChecker) HasPermission(userRole, userID, organizatio
 	
 	// Check if permission matches any of the default permissions
 	for _, perm := range defaultPerms {
-		if permissionMatches(perm, permission) {
+		if PermissionMatches(perm, permission) {
 			return true
 		}
 	}
@@ -44,9 +44,10 @@ func (dpc *DefaultPermissionChecker) HasPermission(userRole, userID, organizatio
 	return false
 }
 
-// permissionMatches checks if a stored permission matches the requested permission
+// PermissionMatches checks if a stored permission matches the requested permission
 // Supports wildcard permissions (e.g., "routes.*" matches "routes.read")
-func permissionMatches(storedPerm, requestedPerm string) bool {
+// Exported for testing purposes
+func PermissionMatches(storedPerm, requestedPerm string) bool {
 	// Exact match
 	if storedPerm == requestedPerm {
 		return true
