@@ -1,21 +1,21 @@
-# Development stage
-FROM node:20-alpine
-WORKDIR /app
-
-# Install dependencies
-COPY package*.json ./
-RUN npm ci
-
-# Copy source code
+# Build stage for production
+FROM base AS builder
+COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
+RUN npm run build
 
-# Expose port
-EXPOSE 3000
+# Production stage
+FROM base AS production
+COPY --from=dependencies /app/node_modules ./node_modules
+# Only copy build artifacts and necessary files for production
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package*.json ./
 
-# Set environment variables for development
-ENV NODE_ENV=development
+# Set environment variables for production
+ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Run development server with Turbopack
-CMD ["npm", "run", "dev"]
+# Run production server
+CMD ["npm", "run", "start"]

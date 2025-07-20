@@ -7,6 +7,7 @@ import (
 
 	"routrapp-api/internal/errors"
 	"routrapp-api/internal/logger"
+	"routrapp-api/internal/middleware"
 	"routrapp-api/internal/models"
 	"routrapp-api/internal/utils/auth"
 	"routrapp-api/internal/utils/constants"
@@ -1196,5 +1197,77 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		"success": true,
 		"data":    tokenResponse,
 		"message": "Token refreshed successfully",
+	})
+} 
+
+// GetCurrentUser handles GET /api/v1/auth/me
+func (h *AuthHandler) GetCurrentUser(c *gin.Context) {
+	// Get user context from middleware
+	userID, exists := middleware.GetUserID(c)
+	if !exists {
+		logger.WithContext(c).Error("User ID not found in context")
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusUnauthorized,
+				"User not authenticated",
+				map[string]interface{}{
+					"code": "AUTHENTICATION_REQUIRED",
+				},
+			),
+		})
+		return
+	}
+
+	// Get additional user info from context
+	email, _ := middleware.GetUserEmail(c)
+
+	// Fetch full user details from database
+	var user models.User
+	if err := h.db.Preload("Role").Where("id = ?", userID).First(&user).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			logger.WithContext(c).Errorf("User not found in database: %d", userID)
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusNotFound,
+					"User not found",
+					map[string]interface{}{
+						"code": "USER_NOT_FOUND",
+					},
+				),
+			})
+			return
+		}
+		logger.WithContext(c).Errorf("Database error fetching user: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Failed to fetch user data",
+				map[string]interface{}{
+					"code": "DATABASE_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	// Prepare user response
+	userResponse := validation.UserResponse{
+		BaseResponse: validation.BaseResponse{
+			ID:        user.ID,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Active:    user.Active,
+		Role:      user.Role.Name.String(),
+	}
+
+	logger.WithContext(c).Infof("User %s retrieved their profile", email)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    userResponse,
+		"message": "User profile retrieved successfully",
 	})
 } 

@@ -81,6 +81,7 @@ func SetupTestContext() (*TestContext, error) {
 		authGroup.POST("/register-user", authHandler.Register)                                      // POST /api/v1/auth/register-user (user registration to existing org)
 		authGroup.POST("/login", authHandler.Login)                                                    // POST /api/v1/auth/login
 		authGroup.POST("/refresh", authHandler.RefreshToken)                                           // POST /api/v1/auth/refresh
+		authGroup.GET("/me", CreateTestAuthMiddleware(jwtService), authHandler.GetCurrentUser)         // GET /api/v1/auth/me (requires auth)
 		authGroup.POST("/logout", CreateTestAuthMiddleware(jwtService), authHandler.Logout)            // POST /api/v1/auth/logout (requires auth)
 		authGroup.POST("/change-password", CreateTestAuthMiddleware(jwtService), authHandler.ChangePassword) // POST /api/v1/auth/change-password (requires auth)
 	}

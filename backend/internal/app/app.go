@@ -54,14 +54,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	// Auto-migrate models in development environment
 	if app.config.Environment == "development" {
 		logger.Info("Running database migrations for development environment")
-		err = app.db.AutoMigrate(
-			&models.Tenant{},
-			&models.User{},
-			&models.Technician{},
-			&models.Route{},
-			&models.RouteStop{},
-			&models.RouteActivity{},
-		)
+		err = app.db.AutoMigrate(models.AllModels()...)
 		if err != nil {
 			logger.Errorf("Failed to auto migrate: %v", err)
 			return nil, fmt.Errorf("failed to auto migrate: %w", err)

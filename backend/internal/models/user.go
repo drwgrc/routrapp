@@ -11,7 +11,7 @@ type User struct {
 	LastName     string     `gorm:"type:varchar(100)" json:"last_name"`
 	RoleID       uint       `gorm:"not null;index" json:"role_id"`
 	LastLoginAt  *time.Time `json:"last_login_at,omitempty"`
-	RefreshToken string     `gorm:"type:varchar(255)" json:"-"`
+	RefreshToken string     `gorm:"type:varchar(1000)" json:"-"`
 	Active       bool       `gorm:"default:true" json:"active"`
 
 	// Relationships

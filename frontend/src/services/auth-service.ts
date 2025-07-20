@@ -13,19 +13,53 @@ interface LoginResponse {
 }
 
 interface UserData {
-  id: string;
+  id: number;
   email: string;
-  name: string;
-  organizationId: string;
+  first_name: string;
+  last_name: string;
+  active: boolean;
   role: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface RegistrationData {
   email: string;
   password: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   organizationName: string;
+  organizationEmail: string;
+  subDomain: string;
 }
+
+// Helper function to safely access localStorage
+const getFromStorage = (key: string): string | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const setToStorage = (key: string, value: string): void => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+};
+
+const removeFromStorage = (key: string): void => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+};
 
 // Auth service implementation
 const authService = {
@@ -38,8 +72,8 @@ const authService = {
       });
 
       // Store tokens in localStorage or secure storage
-      localStorage.setItem("auth_token", response.token);
-      localStorage.setItem("refresh_token", response.refreshToken);
+      setToStorage("auth_token", response.token);
+      setToStorage("refresh_token", response.refreshToken);
 
       return response;
     } catch (error) {
@@ -57,8 +91,8 @@ const authService = {
       console.error("Logout error:", error);
     } finally {
       // Clear local storage regardless of API call success
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("refresh_token");
+      removeFromStorage("auth_token");
+      removeFromStorage("refresh_token");
     }
   },
 
@@ -70,8 +104,11 @@ const authService = {
         {
           email: data.email,
           password: data.password,
-          name: data.name,
-          organizationName: data.organizationName,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          organization_name: data.organizationName,
+          organization_email: data.organizationEmail,
+          sub_domain: data.subDomain,
         }
       );
       return response;
@@ -83,7 +120,7 @@ const authService = {
 
   // Check if user is authenticated
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem("auth_token");
+    return !!getFromStorage("auth_token");
   },
 
   // Get current user data
@@ -94,9 +131,27 @@ const authService = {
       }
 
       const userData = await apiClient.get<UserData>("/auth/me");
-      return userData;
+      return userData as UserData;
     } catch (error) {
-      console.error("Failed to get user data:", error);
+      // Don't log 401 errors as they are expected when tokens are invalid
+      const isAxiosError =
+        error && typeof error === "object" && "status" in error;
+      const status = isAxiosError
+        ? (error as { status?: number }).status
+        : undefined;
+
+      if (status !== 401) {
+        console.error("Failed to get user data:", error);
+      }
+
+      // Don't clear tokens on 401 errors - let the user stay logged in
+      // The token might be valid but there could be server issues
+      // Only clear tokens for other types of errors
+      if (status && status !== 401) {
+        removeFromStorage("auth_token");
+        removeFromStorage("refresh_token");
+      }
+
       return null;
     }
   },
