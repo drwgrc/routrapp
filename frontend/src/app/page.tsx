@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useTheme } from "@/components/theme-provider";
+import apiClient, { ApiError } from "@/lib/api/api-client";
 
 interface ApiStatus {
   status: number | null;
@@ -45,20 +46,18 @@ export default function Home() {
     const checkApiStatus = async () => {
       try {
         setApiStatus(prev => ({ ...prev, loading: true, error: null }));
-        const apiBaseUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api";
-        const apiVersion = process.env.NEXT_PUBLIC_API_VERSION || "v1";
-        const response = await fetch(`${apiBaseUrl}/${apiVersion}/health`);
+        await apiClient.get("/health");
         setApiStatus({
-          status: response.status,
+          status: 200,
           loading: false,
           error: null,
         });
       } catch (error) {
+        const apiError = error as ApiError;
         setApiStatus({
-          status: null,
+          status: apiError.status || null,
           loading: false,
-          error: error instanceof Error ? error.message : "Unknown error",
+          error: apiError.message || "Unknown error",
         });
       }
     };
