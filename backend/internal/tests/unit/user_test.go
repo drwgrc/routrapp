@@ -1,11 +1,13 @@
-package models
+package unit_test
 
 import (
 	"testing"
+
+	"routrapp-api/internal/models"
 )
 
 func TestUser_GetFullName(t *testing.T) {
-	user := &User{
+	user := &models.User{
 		FirstName: "John",
 		LastName:  "Doe",
 	}
@@ -19,26 +21,26 @@ func TestUser_GetFullName(t *testing.T) {
 func TestUser_IsOwner(t *testing.T) {
 	tests := []struct {
 		name     string
-		user     *User
+		user     *models.User
 		expected bool
 	}{
 		{
 			name: "Owner role",
-			user: &User{
-				Role: Role{Name: RoleTypeOwner},
+			user: &models.User{
+				Role: models.Role{Name: models.RoleTypeOwner},
 			},
 			expected: true,
 		},
 		{
 			name: "Technician role",
-			user: &User{
-				Role: Role{Name: RoleTypeTechnician},
+			user: &models.User{
+				Role: models.Role{Name: models.RoleTypeTechnician},
 			},
 			expected: false,
 		},
 		{
 			name: "No role loaded",
-			user: &User{},
+			user: &models.User{},
 			expected: false,
 		},
 	}
@@ -55,26 +57,26 @@ func TestUser_IsOwner(t *testing.T) {
 func TestUser_IsTechnician(t *testing.T) {
 	tests := []struct {
 		name     string
-		user     *User
+		user     *models.User
 		expected bool
 	}{
 		{
 			name: "Technician role",
-			user: &User{
-				Role: Role{Name: RoleTypeTechnician},
+			user: &models.User{
+				Role: models.Role{Name: models.RoleTypeTechnician},
 			},
 			expected: true,
 		},
 		{
 			name: "Owner role",
-			user: &User{
-				Role: Role{Name: RoleTypeOwner},
+			user: &models.User{
+				Role: models.Role{Name: models.RoleTypeOwner},
 			},
 			expected: false,
 		},
 		{
 			name: "No role loaded",
-			user: &User{},
+			user: &models.User{},
 			expected: false,
 		},
 	}
@@ -91,15 +93,15 @@ func TestUser_IsTechnician(t *testing.T) {
 func TestUser_HasPermission(t *testing.T) {
 	tests := []struct {
 		name       string
-		user       *User
+		user       *models.User
 		permission string
 		expected   bool
 	}{
 		{
 			name: "Owner with full permission",
-			user: &User{
-				Role: Role{
-					Name: RoleTypeOwner,
+			user: &models.User{
+				Role: models.Role{
+					Name: models.RoleTypeOwner,
 					Permissions: `["organizations.*", "users.*", "technicians.*", "routes.*", "roles.*"]`,
 				},
 			},
@@ -108,9 +110,9 @@ func TestUser_HasPermission(t *testing.T) {
 		},
 		{
 			name: "Technician with limited permission",
-			user: &User{
-				Role: Role{
-					Name: RoleTypeTechnician,
+			user: &models.User{
+				Role: models.Role{
+					Name: models.RoleTypeTechnician,
 					Permissions: `["routes.read", "routes.update_status", "technicians.read_own", "technicians.update_own"]`,
 				},
 			},
@@ -119,9 +121,9 @@ func TestUser_HasPermission(t *testing.T) {
 		},
 		{
 			name: "Technician without permission",
-			user: &User{
-				Role: Role{
-					Name: RoleTypeTechnician,
+			user: &models.User{
+				Role: models.Role{
+					Name: models.RoleTypeTechnician,
 					Permissions: `["routes.read", "routes.update_status", "technicians.read_own", "technicians.update_own"]`,
 				},
 			},
@@ -130,7 +132,7 @@ func TestUser_HasPermission(t *testing.T) {
 		},
 		{
 			name:       "No role loaded",
-			user:       &User{},
+			user:       &models.User{},
 			permission: "any.permission",
 			expected:   false,
 		},
@@ -150,7 +152,7 @@ func TestUser_EmailUniquenessConstraint(t *testing.T) {
 	// for multi-tenant email uniqueness: (organization_id, email)
 	
 	t.Run("Indexes method returns correct composite unique index", func(t *testing.T) {
-		user := User{}
+		user := models.User{}
 		indexes := user.Indexes()
 		
 		// Should have exactly one index
@@ -169,7 +171,7 @@ func TestUser_EmailUniquenessConstraint(t *testing.T) {
 		// This test ensures the email field doesn't have a global uniqueIndex tag
 		// We test this by verifying the field tag structure
 		
-		user := User{}
+		user := models.User{}
 		
 		// Use reflection to check that email field doesn't have uniqueIndex tag
 		// In a real integration test with database, we would verify:

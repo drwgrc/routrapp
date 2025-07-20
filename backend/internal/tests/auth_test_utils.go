@@ -1,12 +1,14 @@
-package api
+package tests
 
 import (
 	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"time"
 
+	"routrapp-api/internal/api"
 	"routrapp-api/internal/models"
 	"routrapp-api/internal/utils/auth"
 	"routrapp-api/internal/validation"
@@ -22,7 +24,7 @@ import (
 type TestContext struct {
 	DB          *gorm.DB
 	Router      *gin.Engine
-	AuthHandler *AuthHandler
+	AuthHandler *api.AuthHandler
 	JWTService  *auth.JWTService
 }
 
@@ -61,14 +63,14 @@ func SetupTestContext() (*TestContext, error) {
 	// Set Gin to test mode
 	gin.SetMode(gin.TestMode)
 
+	// Set test JWT secret for consistent token validation
+	os.Setenv("JWT_SECRET", "test-secret-key")
+
 	// Create JWT service with test secret
 	jwtService := auth.NewJWTService("test-secret-key")
 	
-	// Create auth handler with the same JWT service
-	authHandler := &AuthHandler{
-		db:         db,
-		jwtService: jwtService,
-	}
+	// Create auth handler using the constructor
+	authHandler := api.NewAuthHandler(db)
 
 	router := gin.New()
 

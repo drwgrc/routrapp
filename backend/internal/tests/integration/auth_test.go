@@ -1,4 +1,4 @@
-package api
+package integration_test
 
 import (
 	"net/http"
@@ -6,22 +6,23 @@ import (
 	"time"
 
 	"routrapp-api/internal/models"
+	"routrapp-api/internal/tests"
 )
 
 func TestAuthHandler_Login(t *testing.T) {
-	ctx, err := SetupTestContext()
+	ctx, err := tests.SetupTestContext()
 	if err != nil {
 		t.Fatalf("Failed to setup test context: %v", err)
 	}
-	defer CleanupTestContext(ctx)
+	defer tests.CleanupTestContext(ctx)
 
 	// Create test user
-	testUser, err := CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
+	testUser, err := tests.CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
 	if err != nil {
 		t.Fatalf("Failed to create test user: %v", err)
 	}
 
-	tests := []struct {
+	testCases := []struct {
 		name           string
 		email          string
 		password       string
@@ -66,9 +67,9 @@ func TestAuthHandler_Login(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			w := MakeLoginRequest(ctx.Router, tt.email, tt.password)
+			w := tests.MakeLoginRequest(ctx.Router, tt.email, tt.password)
 
 			if w.Code != tt.expectedStatus {
 				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
@@ -76,13 +77,13 @@ func TestAuthHandler_Login(t *testing.T) {
 			}
 
 			if tt.checkSuccess {
-				if !AssertResponseSuccess(w, tt.expectedStatus) {
+				if !tests.AssertResponseSuccess(w, tt.expectedStatus) {
 					t.Errorf("Expected successful response")
 					t.Logf("Response body: %s", w.Body.String())
 				}
 
 				// Parse and validate login response
-				loginResp, err := ParseLoginResponse(w)
+				loginResp, err := tests.ParseLoginResponse(w)
 				if err != nil {
 					t.Errorf("Failed to parse login response: %v", err)
 					return
@@ -131,7 +132,7 @@ func TestAuthHandler_Login(t *testing.T) {
 					}
 				}
 			} else if tt.expectedCode != "" {
-				if !AssertResponseError(w, tt.expectedStatus, tt.expectedCode) {
+				if !tests.AssertResponseError(w, tt.expectedStatus, tt.expectedCode) {
 					t.Errorf("Expected error code %s", tt.expectedCode)
 					t.Logf("Response body: %s", w.Body.String())
 				}
@@ -141,55 +142,55 @@ func TestAuthHandler_Login(t *testing.T) {
 }
 
 func TestAuthHandler_Login_InactiveUser(t *testing.T) {
-	ctx, err := SetupTestContext()
+	ctx, err := tests.SetupTestContext()
 	if err != nil {
 		t.Fatalf("Failed to setup test context: %v", err)
 	}
-	defer CleanupTestContext(ctx)
+	defer tests.CleanupTestContext(ctx)
 
 	// Create inactive test user
-	_, err = CreateCompleteTestUser(ctx.DB, "inactive@example.com", "password123", models.RoleTypeOwner, false)
+	_, err = tests.CreateCompleteTestUser(ctx.DB, "inactive@example.com", "password123", models.RoleTypeOwner, false)
 	if err != nil {
 		t.Fatalf("Failed to create test user: %v", err)
 	}
 
-	w := MakeLoginRequest(ctx.Router, "inactive@example.com", "password123")
+	w := tests.MakeLoginRequest(ctx.Router, "inactive@example.com", "password123")
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("Expected status %d, got %d", http.StatusUnauthorized, w.Code)
 	}
 
-	if !AssertResponseError(w, http.StatusUnauthorized, "ACCOUNT_DISABLED") {
+	if !tests.AssertResponseError(w, http.StatusUnauthorized, "ACCOUNT_DISABLED") {
 		t.Error("Expected ACCOUNT_DISABLED error")
 		t.Logf("Response body: %s", w.Body.String())
 	}
 }
 
 func TestAuthHandler_RefreshToken(t *testing.T) {
-	ctx, err := SetupTestContext()
+	ctx, err := tests.SetupTestContext()
 	if err != nil {
 		t.Fatalf("Failed to setup test context: %v", err)
 	}
-	defer CleanupTestContext(ctx)
+	defer tests.CleanupTestContext(ctx)
 
 	// Create test user and login to get tokens
-	testUser, err := CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
+	testUser, err := tests.CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
 	if err != nil {
 		t.Fatalf("Failed to create test user: %v", err)
 	}
 
 	// Login to get valid tokens
-	loginW := MakeLoginRequest(ctx.Router, "test@example.com", "password123")
+	loginW := tests.MakeLoginRequest(ctx.Router, "test@example.com", "password123")
 	if loginW.Code != http.StatusOK {
 		t.Fatalf("Login failed: %s", loginW.Body.String())
 	}
 
-	loginResp, err := ParseLoginResponse(loginW)
+	loginResp, err := tests.ParseLoginResponse(loginW)
 	if err != nil {
 		t.Fatalf("Failed to parse login response: %v", err)
 	}
 
-	tests := []struct {
+	testCases := []struct {
 		name           string
 		refreshToken   string
 		expectedStatus int
@@ -222,9 +223,9 @@ func TestAuthHandler_RefreshToken(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			w := MakeRefreshRequest(ctx.Router, tt.refreshToken)
+			w := tests.MakeRefreshRequest(ctx.Router, tt.refreshToken)
 
 			if w.Code != tt.expectedStatus {
 				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
@@ -232,13 +233,13 @@ func TestAuthHandler_RefreshToken(t *testing.T) {
 			}
 
 			if tt.checkSuccess {
-				if !AssertResponseSuccess(w, tt.expectedStatus) {
+				if !tests.AssertResponseSuccess(w, tt.expectedStatus) {
 					t.Errorf("Expected successful response")
 					t.Logf("Response body: %s", w.Body.String())
 				}
 
 				// Parse and validate token response
-				tokenResp, err := ParseTokenResponse(w)
+				tokenResp, err := tests.ParseTokenResponse(w)
 				if err != nil {
 					t.Errorf("Failed to parse token response: %v", err)
 					return
@@ -270,7 +271,7 @@ func TestAuthHandler_RefreshToken(t *testing.T) {
 					}
 				}
 			} else if tt.expectedCode != "" {
-				if !AssertResponseError(w, tt.expectedStatus, tt.expectedCode) {
+				if !tests.AssertResponseError(w, tt.expectedStatus, tt.expectedCode) {
 					t.Errorf("Expected error code %s", tt.expectedCode)
 					t.Logf("Response body: %s", w.Body.String())
 				}
@@ -280,48 +281,48 @@ func TestAuthHandler_RefreshToken(t *testing.T) {
 }
 
 func TestAuthHandler_RefreshToken_InactiveUser(t *testing.T) {
-	ctx, err := SetupTestContext()
+	ctx, err := tests.SetupTestContext()
 	if err != nil {
 		t.Fatalf("Failed to setup test context: %v", err)
 	}
-	defer CleanupTestContext(ctx)
+	defer tests.CleanupTestContext(ctx)
 
 	// Create test user and login
-	testUser, err := CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
+	testUser, err := tests.CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
 	if err != nil {
 		t.Fatalf("Failed to create test user: %v", err)
 	}
 
 	// Login to get tokens
-	loginW := MakeLoginRequest(ctx.Router, "test@example.com", "password123")
-	loginResp, _ := ParseLoginResponse(loginW)
+	loginW := tests.MakeLoginRequest(ctx.Router, "test@example.com", "password123")
+	loginResp, _ := tests.ParseLoginResponse(loginW)
 
 	// Deactivate user
 	testUser.User.Active = false
 	ctx.DB.Save(testUser.User)
 
 	// Try to refresh token with deactivated user
-	w := MakeRefreshRequest(ctx.Router, loginResp.RefreshToken)
+	w := tests.MakeRefreshRequest(ctx.Router, loginResp.RefreshToken)
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("Expected status %d, got %d", http.StatusUnauthorized, w.Code)
 	}
 
-	if !AssertResponseError(w, http.StatusUnauthorized, "ACCOUNT_DISABLED") {
+	if !tests.AssertResponseError(w, http.StatusUnauthorized, "ACCOUNT_DISABLED") {
 		t.Error("Expected ACCOUNT_DISABLED error")
 		t.Logf("Response body: %s", w.Body.String())
 	}
 }
 
 func TestAuthHandler_RefreshToken_TokenNotInDatabase(t *testing.T) {
-	ctx, err := SetupTestContext()
+	ctx, err := tests.SetupTestContext()
 	if err != nil {
 		t.Fatalf("Failed to setup test context: %v", err)
 	}
-	defer CleanupTestContext(ctx)
+	defer tests.CleanupTestContext(ctx)
 
 	// Create test user and generate a refresh token manually
-	testUser, err := CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
+	testUser, err := tests.CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
 	if err != nil {
 		t.Fatalf("Failed to create test user: %v", err)
 	}
@@ -338,36 +339,36 @@ func TestAuthHandler_RefreshToken_TokenNotInDatabase(t *testing.T) {
 	}
 
 	// Try to use the refresh token that's not stored in the database
-	w := MakeRefreshRequest(ctx.Router, refreshToken)
+	w := tests.MakeRefreshRequest(ctx.Router, refreshToken)
 
 	if w.Code != http.StatusUnauthorized {
 		t.Errorf("Expected status %d, got %d", http.StatusUnauthorized, w.Code)
 	}
 
-	if !AssertResponseError(w, http.StatusUnauthorized, "INVALID_REFRESH_TOKEN") {
+	if !tests.AssertResponseError(w, http.StatusUnauthorized, "INVALID_REFRESH_TOKEN") {
 		t.Error("Expected INVALID_REFRESH_TOKEN error")
 		t.Logf("Response body: %s", w.Body.String())
 	}
 }
 
 func TestAuthHandler_Logout(t *testing.T) {
-	ctx, err := SetupTestContext()
+	ctx, err := tests.SetupTestContext()
 	if err != nil {
 		t.Fatalf("Failed to setup test context: %v", err)
 	}
-	defer CleanupTestContext(ctx)
+	defer tests.CleanupTestContext(ctx)
 
 	// Create test user and login
-	_, err = CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
+	_, err = tests.CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
 	if err != nil {
 		t.Fatalf("Failed to create test user: %v", err)
 	}
 
 	// Login to get tokens
-	loginW := MakeLoginRequest(ctx.Router, "test@example.com", "password123")
-	loginResp, _ := ParseLoginResponse(loginW)
+	loginW := tests.MakeLoginRequest(ctx.Router, "test@example.com", "password123")
+	loginResp, _ := tests.ParseLoginResponse(loginW)
 
-	tests := []struct {
+	testCases := []struct {
 		name           string
 		accessToken    string
 		expectedStatus int
@@ -400,9 +401,9 @@ func TestAuthHandler_Logout(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			w := MakeLogoutRequest(ctx.Router, tt.accessToken)
+			w := tests.MakeLogoutRequest(ctx.Router, tt.accessToken)
 
 			if w.Code != tt.expectedStatus {
 				t.Errorf("Expected status %d, got %d", tt.expectedStatus, w.Code)
@@ -410,7 +411,7 @@ func TestAuthHandler_Logout(t *testing.T) {
 			}
 
 			if tt.checkSuccess {
-				if !AssertResponseSuccess(w, tt.expectedStatus) {
+				if !tests.AssertResponseSuccess(w, tt.expectedStatus) {
 					t.Errorf("Expected successful response")
 					t.Logf("Response body: %s", w.Body.String())
 				}
@@ -422,7 +423,7 @@ func TestAuthHandler_Logout(t *testing.T) {
 					t.Error("Refresh token should be cleared from database")
 				}
 			} else if tt.expectedCode != "" {
-				if !AssertResponseError(w, tt.expectedStatus, tt.expectedCode) {
+				if !tests.AssertResponseError(w, tt.expectedStatus, tt.expectedCode) {
 					t.Errorf("Expected error code %s", tt.expectedCode)
 					t.Logf("Response body: %s", w.Body.String())
 				}
@@ -432,26 +433,26 @@ func TestAuthHandler_Logout(t *testing.T) {
 }
 
 func TestAuthHandler_FullAuthFlow(t *testing.T) {
-	ctx, err := SetupTestContext()
+	ctx, err := tests.SetupTestContext()
 	if err != nil {
 		t.Fatalf("Failed to setup test context: %v", err)
 	}
-	defer CleanupTestContext(ctx)
+	defer tests.CleanupTestContext(ctx)
 
 	// Create test user
-	_, err = CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
+	_, err = tests.CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
 	if err != nil {
 		t.Fatalf("Failed to create test user: %v", err)
 	}
 
 	t.Run("Complete authentication flow", func(t *testing.T) {
 		// Step 1: Login
-		loginW := MakeLoginRequest(ctx.Router, "test@example.com", "password123")
+		loginW := tests.MakeLoginRequest(ctx.Router, "test@example.com", "password123")
 		if loginW.Code != http.StatusOK {
 			t.Fatalf("Login failed: %s", loginW.Body.String())
 		}
 
-		loginResp, err := ParseLoginResponse(loginW)
+		loginResp, err := tests.ParseLoginResponse(loginW)
 		if err != nil {
 			t.Fatalf("Failed to parse login response: %v", err)
 		}
@@ -459,12 +460,12 @@ func TestAuthHandler_FullAuthFlow(t *testing.T) {
 		t.Logf("Login successful - Access token: %s...", loginResp.AccessToken[:20])
 
 		// Step 2: Use refresh token to get new access token
-		refreshW := MakeRefreshRequest(ctx.Router, loginResp.RefreshToken)
+		refreshW := tests.MakeRefreshRequest(ctx.Router, loginResp.RefreshToken)
 		if refreshW.Code != http.StatusOK {
 			t.Fatalf("Token refresh failed: %s", refreshW.Body.String())
 		}
 
-		tokenResp, err := ParseTokenResponse(refreshW)
+		tokenResp, err := tests.ParseTokenResponse(refreshW)
 		if err != nil {
 			t.Fatalf("Failed to parse token response: %v", err)
 		}
@@ -472,7 +473,7 @@ func TestAuthHandler_FullAuthFlow(t *testing.T) {
 		t.Logf("Token refresh successful - New access token: %s...", tokenResp.AccessToken[:20])
 
 		// Step 3: Logout using new access token
-		logoutW := MakeLogoutRequest(ctx.Router, tokenResp.AccessToken)
+		logoutW := tests.MakeLogoutRequest(ctx.Router, tokenResp.AccessToken)
 		if logoutW.Code != http.StatusOK {
 			t.Fatalf("Logout failed: %s", logoutW.Body.String())
 		}
@@ -480,14 +481,14 @@ func TestAuthHandler_FullAuthFlow(t *testing.T) {
 		t.Log("Logout successful")
 
 		// Step 4: Verify refresh token is cleared and cannot be used again
-		finalRefreshW := MakeRefreshRequest(ctx.Router, loginResp.RefreshToken)
+		finalRefreshW := tests.MakeRefreshRequest(ctx.Router, loginResp.RefreshToken)
 		if finalRefreshW.Code != http.StatusUnauthorized {
 			t.Errorf("Expected refresh to fail after logout, got status %d", finalRefreshW.Code)
 		}
 
 		t.Logf("Final refresh response body: %s", finalRefreshW.Body.String())
 		
-		if !AssertResponseError(finalRefreshW, http.StatusUnauthorized, "INVALID_REFRESH_TOKEN") {
+		if !tests.AssertResponseError(finalRefreshW, http.StatusUnauthorized, "INVALID_REFRESH_TOKEN") {
 			t.Error("Expected INVALID_REFRESH_TOKEN error after logout")
 			t.Logf("Response body: %s", finalRefreshW.Body.String())
 		}
@@ -497,14 +498,14 @@ func TestAuthHandler_FullAuthFlow(t *testing.T) {
 }
 
 func TestAuthHandler_LoginUpdatesLastLoginTime(t *testing.T) {
-	ctx, err := SetupTestContext()
+	ctx, err := tests.SetupTestContext()
 	if err != nil {
 		t.Fatalf("Failed to setup test context: %v", err)
 	}
-	defer CleanupTestContext(ctx)
+	defer tests.CleanupTestContext(ctx)
 
 	// Create test user
-	testUser, err := CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
+	testUser, err := tests.CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
 	if err != nil {
 		t.Fatalf("Failed to create test user: %v", err)
 	}
@@ -516,7 +517,7 @@ func TestAuthHandler_LoginUpdatesLastLoginTime(t *testing.T) {
 
 	// Login
 	beforeLogin := time.Now()
-	loginW := MakeLoginRequest(ctx.Router, "test@example.com", "password123")
+	loginW := tests.MakeLoginRequest(ctx.Router, "test@example.com", "password123")
 	afterLogin := time.Now()
 
 	if loginW.Code != http.StatusOK {
@@ -544,23 +545,23 @@ func TestAuthHandler_ConcurrentLogins(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		go func(index int) {
-			ctx, err := SetupTestContext()
+			ctx, err := tests.SetupTestContext()
 			if err != nil {
 				t.Errorf("Failed to setup test context for goroutine %d: %v", index, err)
 				done <- true
 				return
 			}
-			defer CleanupTestContext(ctx)
+			defer tests.CleanupTestContext(ctx)
 
 			// Create test user
-			_, err = CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
+			_, err = tests.CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
 			if err != nil {
 				t.Errorf("Failed to create test user for goroutine %d: %v", index, err)
 				done <- true
 				return
 			}
 
-			w := MakeLoginRequest(ctx.Router, "test@example.com", "password123")
+			w := tests.MakeLoginRequest(ctx.Router, "test@example.com", "password123")
 			results[index] = w.Code == http.StatusOK
 			done <- true
 		}(i)

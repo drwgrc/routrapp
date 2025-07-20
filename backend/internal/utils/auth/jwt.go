@@ -145,5 +145,5 @@ func (c *JWTClaims) GetUserContext() map[string]interface{} {
 
 // DefaultJWTService returns a JWT service instance with the default secret key
 func DefaultJWTService() *JWTService {
-	return NewJWTService(constants.JWT_SECRET)
+	return NewJWTService(constants.JWT_SECRET())
 } 
