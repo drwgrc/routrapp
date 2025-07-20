@@ -6,6 +6,13 @@ interface HeaderProps {
 }
 
 export function Header({ setSidebarOpen }: HeaderProps) {
+  // Function to handle mobile menu click
+  const handleMobileMenuClick = () => {
+    if (setSidebarOpen) {
+      setSidebarOpen(true);
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center px-4">
@@ -20,7 +27,7 @@ export function Header({ setSidebarOpen }: HeaderProps) {
         {/* Mobile menu button */}
         <button
           className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition-colors hover:text-foreground hover:bg-accent md:hidden"
-          onClick={() => setSidebarOpen?.(true)}
+          onClick={handleMobileMenuClick}
         >
           <Menu className="h-5 w-5" />
           <span className="sr-only">Toggle navigation menu</span>
