@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 
 	"routrapp-api/internal/errors"
+	"routrapp-api/internal/utils/auth"
 	"routrapp-api/internal/utils/constants"
 )
 
@@ -24,20 +24,14 @@ func TenantMiddleware() gin.HandlerFunc {
 		var tenantCtx TenantContext
 
 		// First try to get organization ID from JWT if user is authenticated
-		if authHeader := c.GetHeader("Authorization"); authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
-			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		if authHeader := c.GetHeader("Authorization"); authHeader != "" {
+			jwtService := auth.DefaultJWTService()
 			
-			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-				// This is a simplified version - in a real app, you would validate the signing method
-				// and use a proper secret key
-				return []byte(constants.JWT_SECRET), nil
-			})
-			
-			if err == nil && token.Valid {
-				if claims, ok := token.Claims.(jwt.MapClaims); ok {
-					if orgID, ok := claims["organization_id"].(float64); ok {
-						tenantCtx.OrganizationID = uint(orgID)
-					}
+			// Extract token from Bearer header
+			if tokenString, err := auth.ExtractTokenFromHeader(authHeader); err == nil {
+				// Validate the token using our JWT service
+				if claims, err := jwtService.ValidateToken(tokenString); err == nil {
+					tenantCtx.OrganizationID = claims.OrganizationID
 				}
 			}
 		}
