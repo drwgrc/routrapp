@@ -1,0 +1,285 @@
+---
+alwaysApply: true
+---
+
+---
+
+## alwaysApply: true
+
+# Route Management System - Cursor Rules
+
+## Project Overview
+
+A multi-tenant route optimization system for utility/trade companies to manage technician routes and appointments. Built as a monorepo with Next.js frontend and Go backend.
+
+## Core Architecture Principles
+
+- **Monorepo Structure**: Keep frontend and backend in single repository for easier development
+- **API-First Design**: REST API with clear separation between frontend and backend
+- **Offline-First**: Prioritize offline functionality for field technicians
+- **Mobile-First**: Design for mobile devices as primary use case
+- **Documentation-Driven**: Document all architectural decisions in `/docs` directory
+
+## Project Structure
+
+```
+routrapp/
+├── frontend/
+│   ├── src/
+│   │   ├── app/           # Next.js app directory
+│   │   ├── components/    # Reusable components
+│   │   ├── hooks/         # Custom hooks (React Query)
+│   │   ├── lib/           # Utilities and helpers
+│   │   ├── services/      # API service layer
+│   │   └── types/         # TypeScript types
+│   └── public/            # Static assets
+├── backend/
+│   ├── cmd/               # Application entrypoints
+│   ├── internal/          # Private application code
+│   │   ├── api/           # HTTP handlers
+│   │   ├── models/        # Database models
+│   │   ├── services/      # Business logic
+│   │   ├── middleware/    # HTTP middleware
+│   │   └── repository/    # Data access layer
+│   └── pkg/               # Public packages
+├── docs/
+│   ├── architecture/      # Architecture decisions
+│   ├── api/               # API documentation
+│   └── deployment/        # Deployment guides
+└── scripts/               # Build and deployment scripts
+```
+
+## Technology Stack Implementation
+
+### Frontend (Next.js + TypeScript)
+
+- Use App Router for modern React features
+- Implement PWA with service workers for offline capability
+- Use React Query for server state management
+- Style with shadcn/ui components and Tailwind CSS
+- Implement responsive design with mobile-first approach
+
+### Backend (Go + Gin)
+
+- Use Gin for HTTP routing with clear middleware chain
+- Implement GORM with PostgreSQL for data persistence
+- Structure code using Domain-Driven Design principles
+- Use dependency injection for testability
+- Implement graceful shutdown and health checks
+
+### Database (PostgreSQL)
+
+- Implement row-level security for multi-tenancy
+- Add `organization_id` to all tenant-specific tables
+- Use migrations for schema changes (golang-migrate)
+- Index foreign keys and frequently queried columns
+- Document schema changes in `/docs/database/`
+
+## Multi-Tenancy Implementation
+
+```go
+// Every tenant-scoped model should embed this
+type TenantModel struct {
+    ID             uint      `gorm:"primaryKey"`
+    OrganizationID uint      `gorm:"not null;index"`
+    CreatedAt      time.Time
+    UpdatedAt      time.Time
+}
+
+// Middleware to inject tenant context
+func TenantMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        // Extract organization_id from JWT
+        // Set in context for all queries
+    }
+}
+```
+
+## API Design Standards
+
+- RESTful endpoints with consistent naming
+- Version API from start: `/api/v1/`
+- Use proper HTTP status codes
+- Implement pagination for list endpoints
+- Return consistent error responses:
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Human readable message",
+    "details": {}
+  }
+}
+```
+
+## Authentication & Authorization
+
+- JWT-based authentication with refresh tokens
+- Role-Based Access Control (RBAC): Owner, Technician
+- Implement middleware for role checking
+- Store sessions in Redis (future enhancement)
+
+## Feature Implementation Guidelines
+
+### 1. Multi-Tenant Authentication
+
+- Use secure password hashing (bcrypt)
+- Implement email verification
+- Add rate limiting to prevent brute force
+- Document auth flow in `/docs/architecture/authentication.md`
+
+### 2. Technician Management
+
+- CRUD operations with soft deletes
+- Track technician availability and skills
+- Implement technician profiles with contact info
+- Add audit logging for all changes
+
+### 3. Route Management
+
+- Store routes with version history
+- Implement route templates for recurring patterns
+- Add validation for route constraints
+- Cache optimized routes for performance
+
+### 4. Route Optimization
+
+- Integrate Google Routes API with proper error handling
+- Implement retry logic with exponential backoff
+- Cache optimization results
+- Add cost tracking for API usage
+- Document integration in `/docs/integrations/google-routes.md`
+
+### 5. Technician Mobile Platform
+
+- Progressive Web App with offline support
+- Background sync for status updates
+- Local storage for route data
+- Push notifications for route changes
+- Location tracking with user consent
+
+## Testing Strategy
+
+```
+# Run all tests
+make test
+
+# Run specific test suites
+make test-unit        # Fast, isolated tests
+make test-integration # API and database tests
+make test-e2e        # Critical user journeys
+```
+
+### Testing Priorities
+
+1. **Integration Tests** (60%): Test API endpoints end-to-end
+2. **E2E Tests** (30%): Cover critical flows (auth, route assignment, technician workflow)
+3. **Unit Tests** (10%): Complex algorithms and utilities only
+
+### Test File Naming
+
+- Unit tests: `*_test.go` or `*.test.ts`
+- Integration tests: `*_integration_test.go`
+- E2E tests: `*.e2e.spec.ts`
+
+## Code Quality Standards
+
+- Run linters before committing (golangci-lint, ESLint)
+- Format code consistently (gofmt, Prettier)
+- Keep functions small and focused (< 50 lines)
+- Write self-documenting code with clear variable names
+- Add comments for complex business logic only
+
+## Error Handling
+
+```go
+// Backend: Always wrap errors with context
+if err != nil {
+    return fmt.Errorf("failed to create route: %w", err)
+}
+
+// Frontend: Use consistent error boundaries
+try {
+    const data = await api.createRoute(route);
+} catch (error) {
+    toast.error(getErrorMessage(error));
+}
+```
+
+## Performance Considerations
+
+- Implement database query optimization (EXPLAIN ANALYZE)
+- Use database connection pooling
+- Add caching layer for frequently accessed data
+- Implement request rate limiting
+- Monitor API response times
+
+## Security Best Practices
+
+- Validate all input data
+- Use parameterized queries (GORM handles this)
+- Implement CORS properly
+- Add security headers (Helmet.js equivalent)
+- Log security events
+- Regular dependency updates
+
+## Development Workflow
+
+1. Create feature branch from `main`
+2. Write tests first (TDD approach)
+3. Implement feature with documentation
+4. Run linters and tests locally
+5. Create PR with clear description
+6. Deploy to staging after merge
+
+## Documentation Requirements
+
+Every new feature must include:
+
+1. Architecture Decision Record (ADR) in `/docs/architecture/`
+2. API documentation with examples
+3. User-facing documentation
+4. Inline code comments for complex logic
+
+## Deployment Configuration
+
+- Use GitHub Actions for CI/CD
+- Environment variables for configuration
+- Health check endpoints for monitoring
+- Graceful shutdown handling
+- Database migration on deployment
+
+## Monitoring and Logging
+
+- Structured logging (JSON format)
+- Correlation IDs for request tracing
+- Error tracking (Sentry integration ready)
+- Performance monitoring hooks
+- Business metrics tracking
+
+## Future Enhancements (Post-MVP)
+
+- WebSocket support for real-time updates
+- Advanced analytics dashboard
+- Customer notification system
+- Third-party integrations
+- Advanced route optimization algorithms
+
+## Git Commit Conventions
+
+```
+feat: Add route optimization endpoint
+fix: Correct timezone handling in scheduler
+docs: Update API documentation for routes
+test: Add integration tests for auth flow
+refactor: Extract route validation logic
+```
+
+## Remember
+
+- Ship working features over perfect code
+- Document decisions for future reference
+- Optimize for developer experience
+- Keep the mobile experience smooth
+- Test critical paths thoroughly

@@ -5,5 +5,5 @@
 backend/configs/config.dev.yaml
 backend/configs/config.prod.yaml
 
-# Docs
-docs/*
+# macOS
+.DS_Store
