@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { useTheme } from "@/components/theme-provider";
 import apiClient, { ApiError } from "@/lib/api/api-client";
+import { AxiosResponse } from "axios";
 
 interface ApiStatus {
   status: number | null;
@@ -46,9 +47,13 @@ export default function Home() {
     const checkApiStatus = async () => {
       try {
         setApiStatus(prev => ({ ...prev, loading: true, error: null }));
-        await apiClient.get("/health");
+        const response = (await apiClient.get(
+          "/health",
+          undefined,
+          true
+        )) as AxiosResponse;
         setApiStatus({
-          status: apiStatus.status,
+          status: response.status,
           loading: false,
           error: null,
         });
@@ -63,7 +68,7 @@ export default function Home() {
     };
 
     checkApiStatus();
-  }, [apiStatus.status]);
+  }, []);
 
   return (
     <MainLayout>

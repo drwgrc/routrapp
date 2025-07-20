@@ -3,6 +3,7 @@ import {
   setupRequestInterceptors,
   setupResponseInterceptors,
 } from "./interceptors";
+import { AxiosResponse } from "axios";
 
 // Configure interceptors
 setupRequestInterceptors(axiosInstance);
@@ -25,9 +26,13 @@ export interface ApiError {
 // Generic API client with common methods
 const apiClient = {
   // GET request
-  get: async <T>(url: string, params?: Record<string, unknown>): Promise<T> => {
+  get: async <T>(
+    url: string,
+    params?: Record<string, unknown>,
+    returnFullResponse?: boolean
+  ): Promise<T | AxiosResponse<ApiResponse<T>>> => {
     const response = await axiosInstance.get<ApiResponse<T>>(url, { params });
-    return response.data.data;
+    return returnFullResponse ? response : response.data.data;
   },
 
   // POST request
