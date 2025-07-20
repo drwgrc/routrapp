@@ -3,7 +3,11 @@
 -- Created: 2025-07-19 00:08:59
 -- Direction: DOWN
 
+-- Remove migration record
+DELETE FROM schema_migrations WHERE version = 3;
+
 -- Drop route activities table
+DROP INDEX IF EXISTS idx_route_activities_deleted_at;
 DROP INDEX IF EXISTS idx_route_activities_timestamp;
 DROP INDEX IF EXISTS idx_route_activities_technician_id;
 DROP INDEX IF EXISTS idx_route_activities_route_stop_id;

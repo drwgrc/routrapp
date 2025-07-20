@@ -108,10 +108,29 @@ DROP TABLE IF EXISTS user_sessions;
 
 ## Current Migrations
 
-| Version | Name            | Description                                      |
-| ------- | --------------- | ------------------------------------------------ |
-| 001     | initial_schema  | Creates base tables (users, technicians, routes) |
-| 002     | add_route_stops | Adds route_stops table for multi-stop routes     |
+| Version | Name              | Description                                                                  |
+| ------- | ----------------- | ---------------------------------------------------------------------------- |
+| 001     | initial           | Creates base multi-tenant schema (organizations, users, technicians, routes) |
+| 002     | add_route_stops   | Adds route_stops table for multi-stop routes with constraints                |
+| 003     | add_user_sessions | Adds user_sessions and route_activities tables                               |
+
+## Migration Issues Fixed (2025-01-17)
+
+The migration system was cleaned up to resolve several issues:
+
+1. **Duplicate version conflicts** - Removed conflicting `001_initial_schema.up.sql` that had the same version as `001_initial.up.sql`
+2. **Schema inconsistencies** - Fixed column name mismatches (`is_active` vs `active`, `password` vs `password_hash`)
+3. **Table creation conflicts** - Reorganized migrations to prevent duplicate table creation
+4. **Timestamp standardization** - Updated all migrations to use `TIMESTAMP WITH TIME ZONE`
+5. **Security improvements** - Removed hardcoded admin password from migration
+6. **Index improvements** - Added proper `deleted_at` indexes for soft deletes
+7. **Foreign key consistency** - Ensured proper CASCADE behaviors for multi-tenancy
+
+The migration system now follows a clean incremental approach:
+
+- **001_initial**: Core multi-tenant foundation (organizations, users, technicians, routes)
+- **002_add_route_stops**: Route stops functionality
+- **003_add_user_sessions**: Authentication and activity tracking
 
 ## Future Development
 

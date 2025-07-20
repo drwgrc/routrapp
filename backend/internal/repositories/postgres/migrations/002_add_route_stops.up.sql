@@ -16,15 +16,15 @@ CREATE TABLE IF NOT EXISTS route_stops (
     stop_type VARCHAR(20),
     duration INTEGER, -- estimated time at stop in minutes
     notes TEXT,
-    start_time TIMESTAMP,
-    end_time TIMESTAMP,
+    start_time TIMESTAMP WITH TIME ZONE,
+    end_time TIMESTAMP WITH TIME ZONE,
     is_completed BOOLEAN DEFAULT false,
-    completed_at TIMESTAMP,
+    completed_at TIMESTAMP WITH TIME ZONE,
     photos_count INTEGER DEFAULT 0,
     notes_count INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    deleted_at TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Create indexes for better performance
@@ -32,6 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_route_stops_organization_id ON route_stops(organi
 CREATE INDEX IF NOT EXISTS idx_route_stops_route_id ON route_stops(route_id);
 CREATE INDEX IF NOT EXISTS idx_route_stops_sequence ON route_stops(route_id, sequence_num);
 CREATE INDEX IF NOT EXISTS idx_route_stops_completed ON route_stops(is_completed);
+CREATE INDEX IF NOT EXISTS idx_route_stops_deleted_at ON route_stops(deleted_at);
 
 -- Add constraint to ensure stop sequence is unique within a route
 ALTER TABLE route_stops ADD CONSTRAINT unique_route_stop_sequence 

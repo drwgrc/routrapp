@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS user_sessions (
     ip_address VARCHAR(50),
     user_agent TEXT,
     is_valid BOOLEAN DEFAULT true,
-    expires_at TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create indexes for better performance
@@ -37,9 +37,10 @@ CREATE TABLE IF NOT EXISTS route_activities (
     lat DECIMAL(10, 8),
     lng DECIMAL(11, 8),
     photo_url VARCHAR(255),
-    timestamp TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Create indexes for route activities
@@ -48,6 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_route_activities_route_id ON route_activities(rou
 CREATE INDEX IF NOT EXISTS idx_route_activities_route_stop_id ON route_activities(route_stop_id);
 CREATE INDEX IF NOT EXISTS idx_route_activities_technician_id ON route_activities(technician_id);
 CREATE INDEX IF NOT EXISTS idx_route_activities_timestamp ON route_activities(timestamp);
+CREATE INDEX IF NOT EXISTS idx_route_activities_deleted_at ON route_activities(deleted_at);
 
 -- Insert migration record
 INSERT INTO schema_migrations (version, description) 

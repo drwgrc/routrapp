@@ -3,10 +3,14 @@
 -- Created: 2025-01-17 12:00:00
 -- Direction: DOWN
 
+-- Remove migration record
+DELETE FROM schema_migrations WHERE version = 2;
+
 -- Remove constraint
 ALTER TABLE IF EXISTS route_stops DROP CONSTRAINT IF EXISTS unique_route_stop_sequence;
 
 -- Drop indices
+DROP INDEX IF EXISTS idx_route_stops_deleted_at;
 DROP INDEX IF EXISTS idx_route_stops_completed;
 DROP INDEX IF EXISTS idx_route_stops_sequence;
 DROP INDEX IF EXISTS idx_route_stops_route_id;
