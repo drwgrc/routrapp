@@ -94,7 +94,7 @@ const authService = {
       }
 
       const userData = await apiClient.get<UserData>("/auth/me");
-      return userData;
+      return userData as UserData;
     } catch (error) {
       console.error("Failed to get user data:", error);
       return null;
