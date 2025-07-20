@@ -48,7 +48,7 @@ export default function Home() {
         setApiStatus(prev => ({ ...prev, loading: true, error: null }));
         await apiClient.get("/health");
         setApiStatus({
-          status: 200,
+          status: apiStatus.status,
           loading: false,
           error: null,
         });
@@ -63,7 +63,7 @@ export default function Home() {
     };
 
     checkApiStatus();
-  }, []);
+  }, [apiStatus.status]);
 
   return (
     <MainLayout>

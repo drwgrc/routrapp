@@ -58,9 +58,9 @@ cd backend
    ````bash
    uvicorn main:app --reload --host 0.00port 80   ```
 
-   The API will be available at `http://localhost:8000`
-   - API documentation: `http://localhost:8000/docs`
-   - Alternative docs: `http://localhost:8000/redoc`
+   The API will be available at `http://localhost:8080`
+   - API documentation: `http://localhost:8080/docs`
+   - Alternative docs: `http://localhost:8080/redoc`
    ````
 
 ### Frontend Setup1 **Navigate to the frontend directory:**
