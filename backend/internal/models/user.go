@@ -5,7 +5,7 @@ import "time"
 // User represents a user in the system
 type User struct {
 	Base
-	Email        string     `gorm:"type:varchar(100);uniqueIndex:idx_users_org_email" json:"email"`
+	Email        string     `gorm:"type:varchar(100)" json:"email"`
 	Password     string     `gorm:"type:varchar(255)" json:"-"`
 	FirstName    string     `gorm:"type:varchar(100)" json:"first_name"`
 	LastName     string     `gorm:"type:varchar(100)" json:"last_name"`
@@ -24,6 +24,13 @@ func (User) TableName() string {
 	return "users"
 }
 
+// Indexes returns the database indexes for the User model
+func (User) Indexes() []string {
+	return []string{
+		"CREATE UNIQUE INDEX IF NOT EXISTS idx_users_org_email ON users(organization_id, email) WHERE deleted_at IS NULL",
+	}
+}
+
 // GetFullName returns the user's full name
 func (u *User) GetFullName() string {
 	return u.FirstName + " " + u.LastName
@@ -31,7 +38,7 @@ func (u *User) GetFullName() string {
 
 // HasPermission checks if the user has a specific permission through their role
 func (u *User) HasPermission(permission string) bool {
-	if u.Role.ID == 0 {
+	if u.Role.Name == "" {
 		return false // Role not loaded
 	}
 	return u.Role.HasPermission(permission)
@@ -39,7 +46,7 @@ func (u *User) HasPermission(permission string) bool {
 
 // IsOwner checks if the user has owner role
 func (u *User) IsOwner() bool {
-	if u.Role.ID == 0 {
+	if u.Role.Name == "" {
 		return false // Role not loaded
 	}
 	return u.Role.Name == RoleTypeOwner
@@ -47,7 +54,7 @@ func (u *User) IsOwner() bool {
 
 // IsTechnician checks if the user has technician role
 func (u *User) IsTechnician() bool {
-	if u.Role.ID == 0 {
+	if u.Role.Name == "" {
 		return false // Role not loaded
 	}
 	return u.Role.Name == RoleTypeTechnician

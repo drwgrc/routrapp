@@ -33,14 +33,23 @@ func (r *RoleType) Scan(value interface{}) error {
 		return nil
 	}
 	
+	var roleStr string
 	switch v := value.(type) {
 	case string:
-		*r = RoleType(v)
+		roleStr = v
 	case []byte:
-		*r = RoleType(v)
+		roleStr = string(v)
 	default:
 		return fmt.Errorf("cannot scan %T into RoleType", value)
 	}
+	
+	// Convert to RoleType and validate
+	roleType := RoleType(roleStr)
+	if !roleType.IsValid() {
+		return fmt.Errorf("invalid role type: %s", roleStr)
+	}
+	
+	*r = roleType
 	return nil
 }
 
