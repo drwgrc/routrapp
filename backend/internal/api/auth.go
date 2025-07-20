@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"routrapp-api/internal/errors"
@@ -232,6 +233,385 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Logout successful",
+	})
+}
+
+// Register handles POST /api/v1/auth/register
+func (h *AuthHandler) Register(c *gin.Context) {
+	var req validation.RegistrationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.WithContext(c).Errorf("Invalid registration request: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusBadRequest,
+				"Invalid request data: "+err.Error(),
+				map[string]interface{}{
+					"code": "VALIDATION_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	logger.WithContext(c).Infof("Registration attempt for email: %s, organization: %s", req.Email, req.OrganizationName)
+
+	// Check if subdomain is already taken
+	var existingOrg models.Organization
+	if err := h.db.Where("sub_domain = ? AND deleted_at IS NULL", req.SubDomain).First(&existingOrg).Error; err == nil {
+		logger.WithContext(c).Warnf("Registration failed: subdomain %s already exists", req.SubDomain)
+		c.JSON(http.StatusConflict, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusConflict,
+				"Subdomain is already taken",
+				map[string]interface{}{
+					"code": "SUBDOMAIN_TAKEN",
+				},
+			),
+		})
+		return
+	} else if err != gorm.ErrRecordNotFound {
+		logger.WithContext(c).Errorf("Database error checking subdomain: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Internal server error",
+				map[string]interface{}{
+					"code": "INTERNAL_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	// Hash password
+	hashedPassword, err := auth.HashPassword(req.Password)
+	if err != nil {
+		logger.WithContext(c).Errorf("Failed to hash password: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Failed to process registration",
+				map[string]interface{}{
+					"code": "PASSWORD_HASH_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	// Begin transaction for creating organization and user atomically
+	tx := h.db.Begin()
+	if tx.Error != nil {
+		logger.WithContext(c).Errorf("Failed to begin transaction: %v", tx.Error)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Internal server error",
+				map[string]interface{}{
+					"code": "TRANSACTION_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			logger.WithContext(c).Errorf("Panic in registration transaction: %v", r)
+		}
+	}()
+
+	// Create organization
+	org := models.Organization{
+		Name:         req.OrganizationName,
+		SubDomain:    req.SubDomain,
+		ContactEmail: req.OrganizationEmail,
+		Active:       true,
+		PlanType:     "basic",
+	}
+
+	if err := tx.Create(&org).Error; err != nil {
+		tx.Rollback()
+		logger.WithContext(c).Errorf("Failed to create organization: %v", err)
+		
+		// Check if it's a duplicate subdomain error
+		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique") {
+			c.JSON(http.StatusConflict, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusConflict,
+					"Subdomain is already taken",
+					map[string]interface{}{
+						"code": "SUBDOMAIN_TAKEN",
+					},
+				),
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusInternalServerError,
+					"Failed to create organization",
+					map[string]interface{}{
+						"code": "ORGANIZATION_CREATION_ERROR",
+					},
+				),
+			})
+		}
+		return
+	}
+
+	// Create default roles for the organization
+	ownerRole := models.Role{
+		Base: models.Base{
+			OrganizationID: org.ID,
+		},
+		Name:        models.RoleTypeOwner,
+		DisplayName: "Organization Owner",
+		Description: "Full access to all organization resources and settings",
+		Permissions: `["organizations.*", "users.*", "technicians.*", "routes.*", "roles.*"]`,
+		Active:      true,
+	}
+
+	if err := tx.Create(&ownerRole).Error; err != nil {
+		tx.Rollback()
+		logger.WithContext(c).Errorf("Failed to create owner role: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Failed to create organization roles",
+				map[string]interface{}{
+					"code": "ROLE_CREATION_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	technicianRole := models.Role{
+		Base: models.Base{
+			OrganizationID: org.ID,
+		},
+		Name:        models.RoleTypeTechnician,
+		DisplayName: "Technician",
+		Description: "Access to routes and personal information",
+		Permissions: `["routes.read", "routes.update_status", "technicians.read_own", "technicians.update_own"]`,
+		Active:      true,
+	}
+
+	if err := tx.Create(&technicianRole).Error; err != nil {
+		tx.Rollback()
+		logger.WithContext(c).Errorf("Failed to create technician role: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Failed to create organization roles",
+				map[string]interface{}{
+					"code": "ROLE_CREATION_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	// Check if user email already exists in this organization (shouldn't happen but extra safety)
+	var existingUser models.User
+	if err := tx.Where("email = ? AND organization_id = ? AND deleted_at IS NULL", req.Email, org.ID).First(&existingUser).Error; err == nil {
+		tx.Rollback()
+		logger.WithContext(c).Warnf("Registration failed: email %s already exists in organization %d", req.Email, org.ID)
+		c.JSON(http.StatusConflict, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusConflict,
+				"Email is already registered",
+				map[string]interface{}{
+					"code": "EMAIL_ALREADY_EXISTS",
+				},
+			),
+		})
+		return
+	} else if err != gorm.ErrRecordNotFound {
+		tx.Rollback()
+		logger.WithContext(c).Errorf("Database error checking email uniqueness: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Internal server error",
+				map[string]interface{}{
+					"code": "INTERNAL_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	// Create user as organization owner
+	user := models.User{
+		Base: models.Base{
+			OrganizationID: org.ID,
+		},
+		Email:     req.Email,
+		Password:  hashedPassword,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		RoleID:    ownerRole.ID,
+		Active:    true,
+	}
+
+	if err := tx.Create(&user).Error; err != nil {
+		tx.Rollback()
+		logger.WithContext(c).Errorf("Failed to create user: %v", err)
+		
+		// Check if it's a duplicate email error
+		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique") {
+			c.JSON(http.StatusConflict, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusConflict,
+					"Email is already registered",
+					map[string]interface{}{
+						"code": "EMAIL_ALREADY_EXISTS",
+					},
+				),
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusInternalServerError,
+					"Failed to create user",
+					map[string]interface{}{
+						"code": "USER_CREATION_ERROR",
+					},
+				),
+			})
+		}
+		return
+	}
+
+	// Load the role for the user
+	if err := tx.Preload("Role").First(&user, user.ID).Error; err != nil {
+		tx.Rollback()
+		logger.WithContext(c).Errorf("Failed to load user role: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Failed to complete registration",
+				map[string]interface{}{
+					"code": "USER_LOAD_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	// Generate tokens
+	accessToken, err := h.jwtService.GenerateAccessToken(user.ID, user.OrganizationID, user.Email, user.Role.Name.String())
+	if err != nil {
+		tx.Rollback()
+		logger.WithContext(c).Errorf("Failed to generate access token: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Failed to generate access token",
+				map[string]interface{}{
+					"code": "TOKEN_GENERATION_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	refreshToken, err := h.jwtService.GenerateRefreshToken(user.ID, user.OrganizationID, user.Email, user.Role.Name.String())
+	if err != nil {
+		tx.Rollback()
+		logger.WithContext(c).Errorf("Failed to generate refresh token: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Failed to generate refresh token",
+				map[string]interface{}{
+					"code": "TOKEN_GENERATION_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	// Update user's refresh token and last login time
+	now := time.Now()
+	user.RefreshToken = refreshToken
+	user.LastLoginAt = &now
+	
+	if err := tx.Save(&user).Error; err != nil {
+		tx.Rollback()
+		logger.WithContext(c).Errorf("Failed to update user login info: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Failed to complete registration",
+				map[string]interface{}{
+					"code": "USER_UPDATE_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		logger.WithContext(c).Errorf("Failed to commit registration transaction: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"Failed to complete registration",
+				map[string]interface{}{
+					"code": "TRANSACTION_COMMIT_ERROR",
+				},
+			),
+		})
+		return
+	}
+
+	// Prepare response
+	userResponse := validation.UserResponse{
+		BaseResponse: validation.BaseResponse{
+			ID:        user.ID,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Active:    user.Active,
+		Role:      user.Role.Name.String(),
+	}
+
+	orgResponse := validation.OrganizationResponse{
+		ID:             org.ID,
+		Name:           org.Name,
+		SubDomain:      org.SubDomain,
+		ContactEmail:   org.ContactEmail,
+		ContactPhone:   org.ContactPhone,
+		LogoURL:        org.LogoURL,
+		PrimaryColor:   org.PrimaryColor,
+		SecondaryColor: org.SecondaryColor,
+		Active:         org.Active,
+		PlanType:       org.PlanType,
+		CreatedAt:      org.CreatedAt,
+		UpdatedAt:      org.UpdatedAt,
+	}
+
+	registrationResponse := validation.RegistrationResponse{
+		User:         userResponse,
+		Organization: orgResponse,
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    constants.JWT_ACCESS_TOKEN_EXPIRY,
+	}
+
+	logger.WithContext(c).Infof("User %s registered successfully for organization %s", req.Email, req.OrganizationName)
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"data":    registrationResponse,
+		"message": "Registration successful",
 	})
 }
 

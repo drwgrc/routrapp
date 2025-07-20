@@ -176,4 +176,18 @@ type TechnicianFilterRequest struct {
 // RefreshTokenRequest represents request for refreshing access token
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+// RegistrationRequest represents request for user registration with organization creation
+type RegistrationRequest struct {
+	// User details
+	Email     string `json:"email" binding:"required,email,max=100"`
+	Password  string `json:"password" binding:"required,min=8,max=255"`
+	FirstName string `json:"first_name" binding:"required,min=1,max=100"`
+	LastName  string `json:"last_name" binding:"required,min=1,max=100"`
+	
+	// Organization details
+	OrganizationName  string `json:"organization_name" binding:"required,min=1,max=100"`
+	OrganizationEmail string `json:"organization_email" binding:"required,email,max=100"`
+	SubDomain         string `json:"sub_domain" binding:"required,min=1,max=100,alphanum"`
 } 
