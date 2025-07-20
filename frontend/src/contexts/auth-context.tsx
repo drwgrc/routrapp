@@ -157,7 +157,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     onSuccess: () => {
       // Clear all auth-related cached data on successful logout
       queryClient.removeQueries({ queryKey: ["auth"] });
-      queryClient.clear(); // Clear all cache for security
     },
     onError: error => {
       // Log error but still clear local cache
