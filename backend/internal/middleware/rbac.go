@@ -406,9 +406,43 @@ func RequireOwnerOnly() gin.HandlerFunc {
 	return RequireRole("owner")
 }
 
-// RequireResourceOwnership creates middleware that checks if user owns a specific resource
-// This is useful for endpoints like /users/{id} where users should only access their own data
+// ResourceOwnershipStrategy defines how to check ownership for different resource types
+type ResourceOwnershipStrategy interface {
+	CheckOwnership(c *gin.Context, userID, organizationID uint, userRole, resourceID string) bool
+}
+
+// UserResourceStrategy checks ownership for user resources (users can only access their own data)
+type UserResourceStrategy struct{}
+
+func (s *UserResourceStrategy) CheckOwnership(c *gin.Context, userID, organizationID uint, userRole, resourceID string) bool {
+	// Owners can access any user resource within their organization
+	if userRole == "owner" {
+		return true
+	}
+	
+	// Non-owners can only access their own user resource
+	userIDStr := strconv.Itoa(int(userID))
+	return resourceID == userIDStr
+}
+
+// OrganizationResourceStrategy checks ownership for organization-scoped resources
+type OrganizationResourceStrategy struct{}
+
+func (s *OrganizationResourceStrategy) CheckOwnership(c *gin.Context, userID, organizationID uint, userRole, resourceID string) bool {
+	// For organization resources, owners have full access, others need specific permissions
+	// This is a base implementation - specific resource handlers should implement proper checks
+	return userRole == "owner"
+}
+
+// RequireResourceOwnership creates middleware that checks if user owns a specific user resource
+// This is specifically for user resources where non-owners can only access their own data
+// For backward compatibility, this defaults to UserResourceStrategy
 func RequireResourceOwnership(resourceParam string) gin.HandlerFunc {
+	return RequireResourceOwnershipWithStrategy(resourceParam, &UserResourceStrategy{})
+}
+
+// RequireResourceOwnershipWithStrategy creates middleware that checks resource ownership using a custom strategy
+func RequireResourceOwnershipWithStrategy(resourceParam string, strategy ResourceOwnershipStrategy) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := GetUserID(c)
 		if !exists {
@@ -418,6 +452,21 @@ func RequireResourceOwnership(resourceParam string) gin.HandlerFunc {
 					"Authentication required",
 					map[string]interface{}{
 						"code": "AUTHENTICATION_REQUIRED",
+					},
+				),
+			})
+			return
+		}
+
+		// CRITICAL FIX: Add organization context validation
+		organizationID, exists := GetOrganizationID(c)
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusUnauthorized,
+					"Organization context required",
+					map[string]interface{}{
+						"code": "ORGANIZATION_REQUIRED",
 					},
 				),
 			})
@@ -438,13 +487,6 @@ func RequireResourceOwnership(resourceParam string) gin.HandlerFunc {
 			return
 		}
 
-		// Owners can access any resource
-		if userRole == "owner" {
-			c.Next()
-			return
-		}
-
-		// For non-owners, check if they're accessing their own resource
 		resourceID := c.Param(resourceParam)
 		if resourceID == "" {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
@@ -453,21 +495,23 @@ func RequireResourceOwnership(resourceParam string) gin.HandlerFunc {
 					"Resource ID required",
 					map[string]interface{}{
 						"code": "MISSING_RESOURCE_ID",
+						"param": resourceParam,
 					},
 				),
 			})
 			return
 		}
 
-		// Convert userID to string for comparison
-		userIDStr := strconv.Itoa(int(userID))
-		if resourceID != userIDStr {
+		// Use strategy to check ownership
+		if !strategy.CheckOwnership(c, userID, organizationID, userRole, resourceID) {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": errors.NewAppErrorWithDetails(
 					http.StatusForbidden,
 					"Access denied. You can only access your own resources",
 					map[string]interface{}{
 						"code": "RESOURCE_ACCESS_DENIED",
+						"resource_param": resourceParam,
+						"resource_id": resourceID,
 					},
 				),
 			})
@@ -476,6 +520,16 @@ func RequireResourceOwnership(resourceParam string) gin.HandlerFunc {
 
 		c.Next()
 	}
+}
+
+// RequireUserResourceOwnership is an alias for RequireResourceOwnership for clarity
+func RequireUserResourceOwnership(resourceParam string) gin.HandlerFunc {
+	return RequireResourceOwnership(resourceParam)
+}
+
+// RequireOrganizationResourceAccess creates middleware for organization-scoped resources
+func RequireOrganizationResourceAccess(resourceParam string) gin.HandlerFunc {
+	return RequireResourceOwnershipWithStrategy(resourceParam, &OrganizationResourceStrategy{})
 }
 
 // HasPermission checks if the current user has a specific permission
