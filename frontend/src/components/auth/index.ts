@@ -22,3 +22,4 @@ export {
 } from "./route-middleware";
 export { AuthErrorBoundary, useAuthErrorBoundary } from "./auth-error-boundary";
 export { ClientOnly } from "./client-only";
+export { ClientAuthWrapper } from "./client-wrapper";

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import { AppProviders } from "@/providers/app-providers";
-import { AuthErrorBoundary, CombinedMiddleware } from "@/components/auth";
+import { ClientAuthWrapper } from "@/components/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,15 +41,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AppProviders>
-          <AuthErrorBoundary>
-            <CombinedMiddleware
-              routePermissions={routePermissions}
-              enableSessionTimeout={true}
-              enableRoleRedirect={true}
-            >
-              {children}
-            </CombinedMiddleware>
-          </AuthErrorBoundary>
+          <ClientAuthWrapper routePermissions={routePermissions}>
+            {children}
+          </ClientAuthWrapper>
         </AppProviders>
       </body>
     </html>

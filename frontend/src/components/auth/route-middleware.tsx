@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -22,10 +22,10 @@ export function AuthMiddleware({ children }: RouteMiddlewareProps) {
   const pathname = usePathname();
 
   // Define public routes that don't require authentication
-  const publicRoutes = ["/login", "/register", "/"];
+  const publicRoutes = useMemo(() => ["/login", "/register", "/"], []);
 
   // Define routes that should redirect authenticated users
-  const guestOnlyRoutes = ["/login", "/register"];
+  const guestOnlyRoutes = useMemo(() => ["/login", "/register"], []);
 
   useEffect(() => {
     if (isLoading) return;
