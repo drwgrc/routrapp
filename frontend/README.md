@@ -18,6 +18,26 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Code Quality
+
+This project uses ESLint and Prettier for code quality and formatting:
+
+```bash
+# Check code formatting
+npm run format:check
+
+# Fix code formatting
+npm run format
+
+# Run ESLint
+npm run lint
+
+# Fix ESLint issues
+npm run lint:fix
+```
+
+The project is configured to format code on save in VS Code. Make sure you have the Prettier extension installed.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
