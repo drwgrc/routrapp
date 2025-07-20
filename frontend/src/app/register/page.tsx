@@ -41,17 +41,50 @@ export default function RegisterPage() {
     handleSubmit,
     formState: { errors, isValid },
     getValues,
+    watch,
+    setValue,
   } = useForm<RegisterFormData>({
     mode: "onChange",
     defaultValues: {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
       confirmPassword: "",
       organizationName: "",
+      organizationEmail: "",
+      subDomain: "",
       termsAccepted: false,
     },
   });
+
+  // Watch organization name to auto-generate subdomain
+  const organizationName = watch("organizationName");
+
+  // Helper function to generate subdomain from organization name
+  const generateSubDomain = (name: string): string => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "")
+      .substring(0, 20);
+  };
+
+  // Auto-generate subdomain from organization name
+  useEffect(() => {
+    if (organizationName) {
+      const subDomain = generateSubDomain(organizationName);
+      const currentSubDomain = getValues("subDomain");
+
+      // Only auto-update if the field is empty or if it matches the auto-generated value
+      // This prevents overwriting user edits
+      if (
+        !currentSubDomain ||
+        currentSubDomain === generateSubDomain(organizationName)
+      ) {
+        setValue("subDomain", subDomain, { shouldValidate: true });
+      }
+    }
+  }, [organizationName, getValues, setValue]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -65,10 +98,13 @@ export default function RegisterPage() {
       // Clear any previous errors before attempting registration
       clearError();
       await registerUser({
-        name: data.name,
+        firstName: data.firstName,
+        lastName: data.lastName,
         email: data.email,
         password: data.password,
         organizationName: data.organizationName,
+        organizationEmail: data.organizationEmail,
+        subDomain: data.subDomain,
       });
       setRegistrationSuccess(true);
     } catch (err) {
@@ -177,26 +213,50 @@ export default function RegisterPage() {
                 </Alert>
               )}
 
-              {/* Name Field */}
+              {/* First Name Field */}
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="firstName">First Name</Label>
                 <Input
-                  id="name"
+                  id="firstName"
                   type="text"
-                  placeholder="John Doe"
+                  placeholder="John"
                   disabled={isLoading}
-                  {...register("name", {
-                    required: "Full name is required",
+                  {...register("firstName", {
+                    required: "First name is required",
                     minLength: {
                       value: 2,
-                      message: "Name must be at least 2 characters",
+                      message: "First name must be at least 2 characters",
                     },
                   })}
-                  className={errors.name ? "border-destructive" : ""}
+                  className={errors.firstName ? "border-destructive" : ""}
                 />
-                {errors.name && (
+                {errors.firstName && (
                   <p className="text-sm text-destructive">
-                    {errors.name.message}
+                    {errors.firstName.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Last Name Field */}
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  type="text"
+                  placeholder="Doe"
+                  disabled={isLoading}
+                  {...register("lastName", {
+                    required: "Last name is required",
+                    minLength: {
+                      value: 2,
+                      message: "Last name must be at least 2 characters",
+                    },
+                  })}
+                  className={errors.lastName ? "border-destructive" : ""}
+                />
+                {errors.lastName && (
+                  <p className="text-sm text-destructive">
+                    {errors.lastName.message}
                   </p>
                 )}
               </div>
@@ -248,6 +308,70 @@ export default function RegisterPage() {
                 {errors.organizationName && (
                   <p className="text-sm text-destructive">
                     {errors.organizationName.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Organization Email Field */}
+              <div className="space-y-2">
+                <Label htmlFor="organizationEmail">Organization Email</Label>
+                <Input
+                  id="organizationEmail"
+                  type="email"
+                  placeholder="info@yourcompany.com"
+                  disabled={isLoading}
+                  {...register("organizationEmail", {
+                    required: "Organization email is required",
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message:
+                        "Please enter a valid organization email address",
+                    },
+                  })}
+                  className={
+                    errors.organizationEmail ? "border-destructive" : ""
+                  }
+                />
+                {errors.organizationEmail && (
+                  <p className="text-sm text-destructive">
+                    {errors.organizationEmail.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Sub Domain Field */}
+              <div className="space-y-2">
+                <Label htmlFor="subDomain">Sub Domain</Label>
+                <Input
+                  id="subDomain"
+                  type="text"
+                  placeholder="yourcompany"
+                  disabled={isLoading}
+                  {...register("subDomain", {
+                    required: "Sub domain is required",
+                    pattern: {
+                      value: /^[a-z0-9]+$/,
+                      message:
+                        "Sub domain can only contain lowercase letters and numbers",
+                    },
+                    minLength: {
+                      value: 3,
+                      message: "Sub domain must be at least 3 characters",
+                    },
+                    maxLength: {
+                      value: 20,
+                      message: "Sub domain cannot exceed 20 characters",
+                    },
+                  })}
+                  className={errors.subDomain ? "border-destructive" : ""}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Auto-generated from organization name. You can customize it if
+                  needed.
+                </p>
+                {errors.subDomain && (
+                  <p className="text-sm text-destructive">
+                    {errors.subDomain.message}
                   </p>
                 )}
               </div>

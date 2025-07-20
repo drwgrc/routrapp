@@ -23,8 +23,11 @@ interface UserData {
 interface RegistrationData {
   email: string;
   password: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   organizationName: string;
+  organizationEmail: string;
+  subDomain: string;
 }
 
 // Helper function to safely access localStorage
@@ -98,8 +101,11 @@ const authService = {
         {
           email: data.email,
           password: data.password,
-          name: data.name,
-          organizationName: data.organizationName,
+          first_name: data.firstName,
+          last_name: data.lastName,
+          organization_name: data.organizationName,
+          organization_email: data.organizationEmail,
+          sub_domain: data.subDomain,
         }
       );
       return response;

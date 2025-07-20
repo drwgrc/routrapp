@@ -16,8 +16,11 @@ export interface LoginCredentials {
 export interface RegistrationData {
   email: string;
   password: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   organizationName: string;
+  organizationEmail: string;
+  subDomain: string;
 }
 
 export interface AuthState {
