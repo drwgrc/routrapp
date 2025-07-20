@@ -40,3 +40,41 @@ export interface AuthContextValue extends AuthState {
   clearError: () => void;
   refreshUser: () => Promise<void>;
 }
+
+// Role-based access control types
+export type UserRole = "owner" | "technician";
+
+export interface Permission {
+  action: string;
+  resource: string;
+}
+
+// Route protection types
+export interface RouteProtectionOptions {
+  requireAuth?: boolean;
+  allowedRoles?: UserRole[];
+  requiredPermissions?: string[];
+  redirectTo?: string;
+  fallback?: React.ComponentType;
+}
+
+export interface ProtectedRouteProps extends RouteProtectionOptions {
+  children: React.ReactNode;
+}
+
+// Permission checking utilities
+export interface PermissionCheck {
+  hasRole: (role: UserRole) => boolean;
+  hasAnyRole: (roles: UserRole[]) => boolean;
+  hasPermission: (permission: string) => boolean;
+  hasAnyPermission: (permissions: string[]) => boolean;
+  isOwner: () => boolean;
+  isTechnician: () => boolean;
+}
+
+// Auth error types
+export interface AuthError {
+  type: "UNAUTHORIZED" | "FORBIDDEN" | "TOKEN_EXPIRED" | "UNKNOWN";
+  message: string;
+  statusCode?: number;
+}
