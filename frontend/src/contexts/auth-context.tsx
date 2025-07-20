@@ -65,11 +65,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     mutationFn: async () => {
       await authService.logout();
     },
-    onSettled: () => {
-      // Clear all cached data on logout
-      queryClient.clear();
-      // Set user to null
-      queryClient.setQueryData(queryKeys.auth.user, null);
+    onSuccess: () => {
+      // Clear only auth-related cached data on successful logout
+      queryClient.removeQueries({ queryKey: ["auth"] });
+    },
+    onError: error => {
+      // Log error but don't clear cache on failed logout
+      console.error("Logout failed:", error);
     },
   });
 
