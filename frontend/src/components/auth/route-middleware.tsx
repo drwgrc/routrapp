@@ -73,8 +73,8 @@ export function RoleRedirectMiddleware({ children }: RouteMiddlewareProps) {
 
     // Define role-specific default routes
     const roleDefaultRoutes: Record<UserRole, string> = {
-      owner: "/admin/dashboard",
-      technician: "/technician/dashboard",
+      owner: "/admin",
+      technician: "/technician",
     };
 
     // Redirect to role-appropriate page if on root
