@@ -39,10 +39,16 @@ func (u *User) HasPermission(permission string) bool {
 
 // IsOwner checks if the user has owner role
 func (u *User) IsOwner() bool {
+	if u.Role.ID == 0 {
+		return false // Role not loaded
+	}
 	return u.Role.Name == RoleTypeOwner
 }
 
 // IsTechnician checks if the user has technician role
 func (u *User) IsTechnician() bool {
+	if u.Role.ID == 0 {
+		return false // Role not loaded
+	}
 	return u.Role.Name == RoleTypeTechnician
 } 
