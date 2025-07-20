@@ -1,4 +1,5 @@
 import apiClient from "../lib/api/api-client";
+import { defaultTokenManager } from "../lib/token-manager";
 
 // Auth service types
 interface LoginCredentials {
@@ -33,49 +34,34 @@ interface RegistrationData {
   subDomain: string;
 }
 
-// Helper function to safely access localStorage
-const getFromStorage = (key: string): string | null => {
-  if (typeof window === "undefined") return null;
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-};
-
-const setToStorage = (key: string, value: string): void => {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // Silently fail if localStorage is not available
-  }
-};
-
-const removeFromStorage = (key: string): void => {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    // Silently fail if localStorage is not available
-  }
-};
-
-// Auth service implementation
+// Enhanced auth service implementation
 const authService = {
   // User login
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
     try {
-      const response = await apiClient.post<LoginResponse>("/auth/login", {
+      const response = await apiClient.post<{
+        user: UserData;
+        access_token: string;
+        refresh_token: string;
+        token_type: string;
+        expires_in: number;
+      }>("/auth/login", {
         email: credentials.email,
         password: credentials.password,
       });
 
-      // Store tokens in localStorage or secure storage
-      setToStorage("auth_token", response.token);
-      setToStorage("refresh_token", response.refreshToken);
+      // Store tokens using token manager
+      await defaultTokenManager.setTokens(
+        response.access_token,
+        response.refresh_token
+      );
 
-      return response;
+      // Return the expected format for backwards compatibility
+      return {
+        token: response.access_token,
+        refreshToken: response.refresh_token,
+        user: response.user,
+      };
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
@@ -89,10 +75,10 @@ const authService = {
       await apiClient.post<{ success: boolean }>("/auth/logout", {});
     } catch (error) {
       console.error("Logout error:", error);
+      // Continue with local cleanup even if server call fails
     } finally {
-      // Clear local storage regardless of API call success
-      removeFromStorage("auth_token");
-      removeFromStorage("refresh_token");
+      // Clear tokens using token manager
+      await defaultTokenManager.clearTokens();
     }
   },
 
@@ -119,40 +105,102 @@ const authService = {
   },
 
   // Check if user is authenticated
-  isAuthenticated: (): boolean => {
-    return !!getFromStorage("auth_token");
+  isAuthenticated: async (): Promise<boolean> => {
+    try {
+      return await defaultTokenManager.isAuthenticated();
+    } catch (error) {
+      console.warn("Error checking authentication status:", error);
+      return false;
+    }
   },
 
   // Get current user data
   getCurrentUser: async (): Promise<UserData | null> => {
     try {
-      if (!authService.isAuthenticated()) {
+      // Check if user is authenticated first
+      const isAuth = await authService.isAuthenticated();
+      if (!isAuth) {
         return null;
       }
 
       const userData = await apiClient.get<UserData>("/auth/me");
       return userData as UserData;
     } catch (error) {
-      // Don't log 401 errors as they are expected when tokens are invalid
+      // Handle different error types appropriately
       const isAxiosError =
         error && typeof error === "object" && "status" in error;
       const status = isAxiosError
         ? (error as { status?: number }).status
         : undefined;
 
+      // For 401 errors, token might be expired or invalid
+      if (status === 401) {
+        console.warn("Authentication required or token expired");
+        // Let token manager handle token cleanup if needed
+        return null;
+      }
+
+      // Don't log 401 errors as they are expected when tokens are invalid
       if (status !== 401) {
         console.error("Failed to get user data:", error);
       }
 
-      // Don't clear tokens on 401 errors - let the user stay logged in
-      // The token might be valid but there could be server issues
-      // Only clear tokens for other types of errors
-      if (status && status !== 401) {
-        removeFromStorage("auth_token");
-        removeFromStorage("refresh_token");
-      }
-
       return null;
+    }
+  },
+
+  // Get access token (useful for debugging or manual API calls)
+  getAccessToken: async (): Promise<string | null> => {
+    try {
+      return await defaultTokenManager.getAccessToken();
+    } catch (error) {
+      console.warn("Failed to get access token:", error);
+      return null;
+    }
+  },
+
+  // Get refresh token (useful for debugging)
+  getRefreshToken: async (): Promise<string | null> => {
+    try {
+      return await defaultTokenManager.getRefreshToken();
+    } catch (error) {
+      console.warn("Failed to get refresh token:", error);
+      return null;
+    }
+  },
+
+  // Manually refresh token (useful for testing or explicit refresh)
+  refreshToken: async (): Promise<boolean> => {
+    try {
+      const newToken = await defaultTokenManager.refreshTokenIfNeeded();
+      return !!newToken;
+    } catch (error) {
+      console.error("Manual token refresh failed:", error);
+      return false;
+    }
+  },
+
+  // Get token information (useful for debugging)
+  getTokenInfo: async () => {
+    try {
+      return await defaultTokenManager.getTokenInfo();
+    } catch (error) {
+      console.warn("Failed to get token info:", error);
+      return {
+        accessToken: null,
+        isExpired: true,
+        expiresAt: null,
+        timeUntilExpiry: null,
+      };
+    }
+  },
+
+  // Clear all auth data (useful for debugging or manual cleanup)
+  clearAuthData: async (): Promise<void> => {
+    try {
+      await defaultTokenManager.clearTokens();
+    } catch (error) {
+      console.warn("Failed to clear auth data:", error);
     }
   },
 };

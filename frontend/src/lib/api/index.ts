@@ -1,18 +1,10 @@
-import apiClient from "./api-client";
-import axiosInstance from "./axios-instance";
-import {
+// Main API client and utilities
+export { default as apiClient } from "./api-client";
+export { default as axiosInstance } from "./axios-instance";
+export {
   setupRequestInterceptors,
   setupResponseInterceptors,
 } from "./interceptors";
-import type { ApiResponse, ApiError } from "./api-client";
 
-export {
-  apiClient,
-  axiosInstance,
-  setupRequestInterceptors,
-  setupResponseInterceptors,
-  ApiResponse,
-  ApiError,
-};
-
-export default apiClient;
+// API types
+export type { ApiResponse, ApiError } from "./api-client";

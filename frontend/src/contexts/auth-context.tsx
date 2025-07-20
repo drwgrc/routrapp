@@ -10,6 +10,7 @@ import React, {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import authService from "@/services/auth-service";
 import { queryKeys } from "@/lib/query-client";
+import { defaultTokenManager } from "@/lib/token-manager";
 import {
   AuthContextValue,
   LoginCredentials,
@@ -29,24 +30,75 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const queryClient = useQueryClient();
   const [isMounted, setIsMounted] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Set mounted state after hydration to prevent SSR mismatch
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
+  // Initialize auth state and token management
+  useEffect(() => {
+    if (!isMounted) return;
+
+    const initializeAuth = async () => {
+      try {
+        // Set up token manager event handlers
+        const tokenManager = defaultTokenManager;
+
+        // Handle token refresh events
+        const originalOnTokenRefreshed = tokenManager["onTokenRefreshed"];
+        tokenManager["onTokenRefreshed"] = tokens => {
+          console.log("Token refreshed successfully");
+          originalOnTokenRefreshed?.(tokens);
+        };
+
+        // Handle token refresh failures
+        const originalOnRefreshFailed = tokenManager["onRefreshFailed"];
+        tokenManager["onRefreshFailed"] = error => {
+          console.warn("Token refresh failed:", error);
+          // Clear user data from cache
+          queryClient.setQueryData(queryKeys.auth.user, null);
+          originalOnRefreshFailed?.(error);
+        };
+
+        // Handle token expiration
+        const originalOnTokenExpired = tokenManager["onTokenExpired"];
+        tokenManager["onTokenExpired"] = () => {
+          console.warn("Token expired");
+          // Clear user data and potentially redirect
+          queryClient.setQueryData(queryKeys.auth.user, null);
+          originalOnTokenExpired?.();
+        };
+
+        setIsInitialized(true);
+      } catch (error) {
+        console.error("Failed to initialize auth:", error);
+        setIsInitialized(true); // Still mark as initialized to prevent blocking
+      }
+    };
+
+    initializeAuth();
+  }, [isMounted, queryClient]);
+
   // Query for current user data
   const userQuery = useQuery({
     queryKey: queryKeys.auth.user,
     queryFn: async (): Promise<User | null> => {
-      if (!isMounted || !authService.isAuthenticated()) {
+      if (!isMounted || !isInitialized) {
         return null;
       }
+
       try {
+        // Check authentication status first
+        const isAuth = await authService.isAuthenticated();
+        if (!isAuth) {
+          return null;
+        }
+
         return await authService.getCurrentUser();
       } catch (error) {
-        // For 401 errors, don't clear tokens immediately
-        // This could be a temporary network issue or token refresh needed
+        // Handle different error types
         const isAxiosError =
           error && typeof error === "object" && "status" in error;
         const status = isAxiosError
@@ -54,9 +106,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           : undefined;
 
         if (status === 401) {
-          // Don't clear tokens on 401 - let the user stay logged in
-          // The token might be valid but the server might be having issues
-          // or the user might be on a page that doesn't require authentication
+          // Token issues - let token manager handle this
+          console.warn("Authentication failed during user fetch");
           return null;
         }
 
@@ -72,10 +123,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const status = isAxiosError
         ? (error as { response?: { status?: number } }).response?.status
         : undefined;
-      return status !== 401 && status !== 403 && failureCount < 3;
+      return status !== 401 && status !== 403 && failureCount < 2;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: isMounted && authService.isAuthenticated(), // Only run if mounted and has token
+    enabled: isMounted && isInitialized, // Only run if mounted and initialized
+    refetchOnWindowFocus: false, // Disable to reduce unnecessary requests
+    refetchOnReconnect: true, // Re-fetch when connection is restored
   });
 
   // Login mutation
@@ -87,6 +140,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     onSuccess: user => {
       // Update the user query cache
       queryClient.setQueryData(queryKeys.auth.user, user);
+      // Invalidate to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: queryKeys.auth.user });
     },
     onError: () => {
       // Clear user data on login failure
@@ -100,12 +155,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await authService.logout();
     },
     onSuccess: () => {
-      // Clear only auth-related cached data on successful logout
+      // Clear all auth-related cached data on successful logout
       queryClient.removeQueries({ queryKey: ["auth"] });
+      queryClient.clear(); // Clear all cache for security
     },
     onError: error => {
-      // Log error but don't clear cache on failed logout
+      // Log error but still clear local cache
       console.error("Logout failed:", error);
+      // Clear cache anyway for security
+      queryClient.removeQueries({ queryKey: ["auth"] });
     },
   });
 
@@ -118,10 +176,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Derived state from queries and mutations
   const user = userQuery.data || null;
-  // Consider user authenticated if they have a token, even if user data fetch fails
-  const isAuthenticated = authService.isAuthenticated() && isMounted;
+
+  // Enhanced authentication check that considers async nature
+  const [authStatus, setAuthStatus] = useState<
+    "checking" | "authenticated" | "unauthenticated"
+  >("checking");
+
+  useEffect(() => {
+    if (!isMounted || !isInitialized) {
+      setAuthStatus("checking");
+      return;
+    }
+
+    const checkAuth = async () => {
+      try {
+        const isAuth = await authService.isAuthenticated();
+        setAuthStatus(isAuth ? "authenticated" : "unauthenticated");
+      } catch (error) {
+        console.warn("Error checking auth status:", error);
+        setAuthStatus("unauthenticated");
+      }
+    };
+
+    checkAuth();
+  }, [isMounted, isInitialized, user]);
+
+  const isAuthenticated = authStatus === "authenticated";
+
   const isLoading =
     !isMounted ||
+    !isInitialized ||
+    authStatus === "checking" ||
     userQuery.isLoading ||
     loginMutation.isPending ||
     logoutMutation.isPending ||
@@ -159,7 +244,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await queryClient.invalidateQueries({ queryKey: queryKeys.auth.user });
   };
 
-  const contextValue: AuthContextValue = {
+  // Enhanced context value with additional utilities
+  const contextValue: AuthContextValue & {
+    getTokenInfo: () => Promise<{
+      accessToken: string | null;
+      isExpired: boolean;
+      expiresAt: Date | null;
+      timeUntilExpiry: number | null;
+    }>;
+    refreshToken: () => Promise<boolean>;
+  } = {
     user,
     isAuthenticated,
     isLoading,
@@ -169,6 +263,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     register,
     clearError,
     refreshUser,
+    // Additional utilities
+    getTokenInfo: authService.getTokenInfo,
+    refreshToken: authService.refreshToken,
   };
 
   return (
