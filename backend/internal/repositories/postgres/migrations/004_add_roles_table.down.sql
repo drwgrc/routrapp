@@ -7,7 +7,7 @@
 DELETE FROM schema_migrations WHERE version = 4;
 
 -- Add back the role column if it was dropped
--- ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'technician';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'technician';
 
 -- Populate role column from role_id relationship
 UPDATE users 
