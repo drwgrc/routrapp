@@ -7,3 +7,12 @@ backend/configs/config.prod.yaml
 
 # Docs
 docs/*
+docs/
+.cursor/*
+.cursor/
+backend/docs/*
+backend/docs/
+frontend/docs/*
+frontend/docs/
+*.mdc
+.DS_Store
