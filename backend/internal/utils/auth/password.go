@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 const (
 	// DefaultCost is the default bcrypt cost
 	DefaultCost = 12
-	
+
 	// Password validation constants
 	MinPasswordLength = 8
 	MaxPasswordLength = 255
@@ -19,11 +20,11 @@ const (
 
 // PasswordRequirements defines what makes a valid password
 type PasswordRequirements struct {
-	MinLength    int
-	MaxLength    int
-	RequireUpper bool
-	RequireLower bool
-	RequireDigit bool
+	MinLength      int
+	MaxLength      int
+	RequireUpper   bool
+	RequireLower   bool
+	RequireDigit   bool
 	RequireSpecial bool
 }
 
@@ -84,10 +85,10 @@ func ValidatePasswordWithRequirements(password string, req PasswordRequirements)
 
 	// Check length requirements
 	if len(password) < req.MinLength {
-		return errors.New("password must be at least 8 characters long")
+		return fmt.Errorf("password must be at least %d characters long", req.MinLength)
 	}
 	if len(password) > req.MaxLength {
-		return errors.New("password must not exceed 255 characters")
+		return fmt.Errorf("password must not exceed %d characters", req.MaxLength)
 	}
 
 	// Check for uppercase letter
@@ -116,7 +117,7 @@ func ValidatePasswordWithRequirements(password string, req PasswordRequirements)
 
 	// Check for special character
 	if req.RequireSpecial {
-		matched, _ := regexp.MatchString(`[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~` + "`" + `]`, password)
+		matched, _ := regexp.MatchString(`[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`+"`"+`]`, password)
 		if !matched {
 			return errors.New("password must contain at least one special character")
 		}
@@ -130,9 +131,9 @@ func GetPasswordStrength(password string) string {
 	if len(password) < 6 {
 		return "Very Weak"
 	}
-	
+
 	score := 0
-	
+
 	// Length scoring
 	if len(password) >= 8 {
 		score++
@@ -140,7 +141,7 @@ func GetPasswordStrength(password string) string {
 	if len(password) >= 12 {
 		score++
 	}
-	
+
 	// Character type scoring
 	if matched, _ := regexp.MatchString(`[a-z]`, password); matched {
 		score++
@@ -151,10 +152,10 @@ func GetPasswordStrength(password string) string {
 	if matched, _ := regexp.MatchString(`[0-9]`, password); matched {
 		score++
 	}
-	if matched, _ := regexp.MatchString(`[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~` + "`" + `]`, password); matched {
+	if matched, _ := regexp.MatchString(`[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`+"`"+`]`, password); matched {
 		score++
 	}
-	
+
 	// Avoid common patterns
 	lower := strings.ToLower(password)
 	commonPasswords := []string{"password", "123456", "qwerty", "admin", "letmein"}
@@ -164,7 +165,7 @@ func GetPasswordStrength(password string) string {
 			break
 		}
 	}
-	
+
 	switch {
 	case score <= 2:
 		return "Weak"
@@ -186,12 +187,12 @@ func IsCommonPassword(password string) bool {
 		"1234567890", "123123", "password1", "qwerty123",
 		"testpass123!", // Added for testing - meets all validation requirements but is common
 	}
-	
+
 	for _, common := range commonPasswords {
 		if lower == common {
 			return true
 		}
 	}
-	
+
 	return false
-} 
+}
