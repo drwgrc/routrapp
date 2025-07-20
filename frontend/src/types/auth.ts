@@ -1,11 +1,14 @@
 // Authentication types for the frontend application
 
 export interface User {
-  id: string;
+  id: number;
   email: string;
-  name: string;
-  organizationId: string;
+  first_name: string;
+  last_name: string;
+  active: boolean;
   role: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface LoginCredentials {

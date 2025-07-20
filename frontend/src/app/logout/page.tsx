@@ -135,7 +135,7 @@ export default function LogoutPage() {
             </CardTitle>
             <CardDescription className="text-center">
               {user
-                ? `Signed in as ${user.name} (${user.email})`
+                ? `Signed in as ${user.first_name} ${user.last_name} (${user.email})`
                 : "You are currently signed in"}
             </CardDescription>
           </CardHeader>
@@ -152,10 +152,12 @@ export default function LogoutPage() {
               <div className="bg-muted rounded-lg p-4 space-y-2">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user.first_name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium">{user.name}</p>
+                    <p className="font-medium">
+                      {user.first_name} {user.last_name}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {user.email}
                     </p>

@@ -32,6 +32,7 @@ func (a *App) RegisterRoutes() {
 				auth.POST("/register-user", authHandler.Register)         // POST /api/v1/auth/register-user (user registration to existing org)
 				auth.POST("/login", authHandler.Login)                    // POST /api/v1/auth/login
 				auth.POST("/refresh", authHandler.RefreshToken)           // POST /api/v1/auth/refresh
+				auth.GET("/me", middleware.AuthMiddleware(), authHandler.GetCurrentUser) // GET /api/v1/auth/me (requires auth)
 				auth.POST("/logout", middleware.AuthMiddleware(), authHandler.Logout) // POST /api/v1/auth/logout (requires auth)
 				auth.POST("/change-password", middleware.AuthMiddleware(), authHandler.ChangePassword) // POST /api/v1/auth/change-password (requires auth)
 			}

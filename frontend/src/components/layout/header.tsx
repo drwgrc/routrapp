@@ -114,11 +114,13 @@ export function Header() {
               {user && (
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold text-sm">
-                    {user.name.charAt(0).toUpperCase()}
+                    {(user.email || "U").charAt(0).toUpperCase()}
                   </div>
                   <div className="hidden sm:block">
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.role}</p>
+                    <p className="text-sm font-medium">{user.email}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {user.role || "User"}
+                    </p>
                   </div>
                 </div>
               )}

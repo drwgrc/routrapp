@@ -13,11 +13,14 @@ interface LoginResponse {
 }
 
 interface UserData {
-  id: string;
+  id: number;
   email: string;
-  name: string;
-  organizationId: string;
+  first_name: string;
+  last_name: string;
+  active: boolean;
   role: string;
+  created_at: string;
+  updated_at: string;
 }
 
 interface RegistrationData {
@@ -130,7 +133,25 @@ const authService = {
       const userData = await apiClient.get<UserData>("/auth/me");
       return userData as UserData;
     } catch (error) {
-      console.error("Failed to get user data:", error);
+      // Don't log 401 errors as they are expected when tokens are invalid
+      const isAxiosError =
+        error && typeof error === "object" && "status" in error;
+      const status = isAxiosError
+        ? (error as { status?: number }).status
+        : undefined;
+
+      if (status !== 401) {
+        console.error("Failed to get user data:", error);
+      }
+
+      // Don't clear tokens on 401 errors - let the user stay logged in
+      // The token might be valid but there could be server issues
+      // Only clear tokens for other types of errors
+      if (status && status !== 401) {
+        removeFromStorage("auth_token");
+        removeFromStorage("refresh_token");
+      }
+
       return null;
     }
   },

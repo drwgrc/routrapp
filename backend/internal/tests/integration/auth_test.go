@@ -891,4 +891,89 @@ func TestAuthHandler_ConcurrentLogins(t *testing.T) {
 			t.Errorf("Concurrent login %d failed", i)
 		}
 	}
+}
+
+func TestAuthHandler_GetCurrentUser(t *testing.T) {
+	ctx, err := tests.SetupTestContext()
+	if err != nil {
+		t.Fatalf("Failed to setup test context: %v", err)
+	}
+	defer tests.CleanupTestContext(ctx)
+
+	// Create test user
+	testUser, err := tests.CreateCompleteTestUser(ctx.DB, "test@example.com", "password123", models.RoleTypeOwner, true)
+	if err != nil {
+		t.Fatalf("Failed to create test user: %v", err)
+	}
+
+	// Login to get access token
+	loginW := tests.MakeLoginRequest(ctx.Router, "test@example.com", "password123")
+	if loginW.Code != http.StatusOK {
+		t.Fatalf("Login failed: %s", loginW.Body.String())
+	}
+
+	var loginResp map[string]interface{}
+	if err := json.Unmarshal(loginW.Body.Bytes(), &loginResp); err != nil {
+		t.Fatalf("Failed to parse login response: %v", err)
+	}
+
+	accessToken := loginResp["data"].(map[string]interface{})["access_token"].(string)
+
+	// Test GetCurrentUser with valid token
+	t.Run("Valid token", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/api/v1/auth/me", nil)
+		req.Header.Set("Authorization", "Bearer "+accessToken)
+		w := httptest.NewRecorder()
+		ctx.Router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		var response map[string]interface{}
+		if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+			t.Fatalf("Failed to parse response: %v", err)
+		}
+
+		if !response["success"].(bool) {
+			t.Error("Expected success to be true")
+		}
+
+		userData := response["data"].(map[string]interface{})
+		if userData["email"] != "test@example.com" {
+			t.Errorf("Expected email 'test@example.com', got '%s'", userData["email"])
+		}
+		if userData["first_name"] != testUser.User.FirstName {
+			t.Errorf("Expected first_name '%s', got '%s'", testUser.User.FirstName, userData["first_name"])
+		}
+		if userData["last_name"] != testUser.User.LastName {
+			t.Errorf("Expected last_name '%s', got '%s'", testUser.User.LastName, userData["last_name"])
+		}
+		if userData["role"] != "owner" {
+			t.Errorf("Expected role 'owner', got '%s'", userData["role"])
+		}
+	})
+
+	// Test GetCurrentUser without token
+	t.Run("No token", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/api/v1/auth/me", nil)
+		w := httptest.NewRecorder()
+		ctx.Router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401, got %d: %s", w.Code, w.Body.String())
+		}
+	})
+
+	// Test GetCurrentUser with invalid token
+	t.Run("Invalid token", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/api/v1/auth/me", nil)
+		req.Header.Set("Authorization", "Bearer invalid-token")
+		w := httptest.NewRecorder()
+		ctx.Router.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401, got %d: %s", w.Code, w.Body.String())
+		}
+	})
 } 

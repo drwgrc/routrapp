@@ -69,27 +69,39 @@ export const setupResponseInterceptors = (
         originalRequest &&
         typeof window !== "undefined"
       ) {
-        try {
-          // Attempt to refresh the token - implement your token refresh logic here
-          // const refreshToken = getFromStorage('refresh_token');
-          // Call your refresh token endpoint
-          // Update the tokens in storage
+        // Only redirect to login for logout and refresh endpoints
+        // For /auth/me endpoints, let the auth context handle the error gracefully
+        const shouldRedirect =
+          originalRequest.url?.includes("/auth/logout") ||
+          originalRequest.url?.includes("/auth/refresh");
 
-          // Retry the original request with new token
-          // const token = getFromStorage('auth_token');
-          // originalRequest.headers.Authorization = `Bearer ${token}`;
-          // return axiosInstance(originalRequest);
+        if (shouldRedirect) {
+          try {
+            // Attempt to refresh the token - implement your token refresh logic here
+            // const refreshToken = getFromStorage('refresh_token');
+            // Call your refresh token endpoint
+            // Update the tokens in storage
 
-          // For now, just redirect to login
-          window.location.href = "/login";
-          return Promise.reject(error);
-        } catch (refreshError) {
-          // If refresh token fails, redirect to login
-          removeFromStorage("auth_token");
-          removeFromStorage("refresh_token");
-          window.location.href = "/login";
-          return Promise.reject(refreshError);
+            // Retry the original request with new token
+            // const token = getFromStorage('auth_token');
+            // originalRequest.headers.Authorization = `Bearer ${token}`;
+            // return axiosInstance(originalRequest);
+
+            // For now, just redirect to login for logout/refresh endpoints
+            window.location.href = "/login";
+            return Promise.reject(error);
+          } catch (refreshError) {
+            // If refresh token fails, redirect to login
+            removeFromStorage("auth_token");
+            removeFromStorage("refresh_token");
+            window.location.href = "/login";
+            return Promise.reject(refreshError);
+          }
         }
+
+        // For /auth/me and other endpoints, don't automatically redirect
+        // Let the calling code handle the 401 error appropriately
+        // The auth context will clear tokens and user data on 401 errors
       }
 
       // Format error response for consistent handling
