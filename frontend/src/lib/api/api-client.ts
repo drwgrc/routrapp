@@ -27,7 +27,7 @@ const apiClient = {
   // GET request
   get: async <T>(url: string, params?: Record<string, unknown>): Promise<T> => {
     const response = await axiosInstance.get<ApiResponse<T>>(url, { params });
-    return response.data as T;
+    return response.data.data;
   },
 
   // POST request
@@ -36,7 +36,7 @@ const apiClient = {
     data: D
   ): Promise<T> => {
     const response = await axiosInstance.post<ApiResponse<T>>(url, data);
-    return response.data as T;
+    return response.data.data;
   },
 
   // PUT request
@@ -45,7 +45,7 @@ const apiClient = {
     data: D
   ): Promise<T> => {
     const response = await axiosInstance.put<ApiResponse<T>>(url, data);
-    return response.data as T;
+    return response.data.data;
   },
 
   // PATCH request
@@ -54,13 +54,13 @@ const apiClient = {
     data: D
   ): Promise<T> => {
     const response = await axiosInstance.patch<ApiResponse<T>>(url, data);
-    return response.data as T;
+    return response.data.data;
   },
 
   // DELETE request
   delete: async <T>(url: string): Promise<T> => {
     const response = await axiosInstance.delete<ApiResponse<T>>(url);
-    return response.data as T;
+    return response.data.data;
   },
 };
 
