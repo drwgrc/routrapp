@@ -14,12 +14,14 @@ type ThemeProviderState = {
   theme: Theme;
   systemTheme: "dark" | "light";
   actualTheme: "dark" | "light";
+  setTheme: (theme: Theme) => void;
 };
 
 const initialState: ThemeProviderState = {
   theme: "system",
   systemTheme: "light",
   actualTheme: "light",
+  setTheme: () => null,
 };
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
@@ -27,9 +29,26 @@ const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 export function ThemeProvider({
   children,
   defaultTheme = "system",
+  storageKey = "routrapp-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme] = useState<Theme>(defaultTheme);
+  const [theme, setTheme] = useState<Theme>(() => {
+    // Try to get theme from localStorage first, fallback to defaultTheme
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(storageKey);
+        if (
+          stored &&
+          (stored === "dark" || stored === "light" || stored === "system")
+        ) {
+          return stored as Theme;
+        }
+      } catch {
+        // Ignore localStorage errors
+      }
+    }
+    return defaultTheme;
+  });
   const [systemTheme, setSystemTheme] = useState<"dark" | "light">("light");
   const [actualTheme, setActualTheme] = useState<"dark" | "light">("light");
 
@@ -61,10 +80,20 @@ export function ThemeProvider({
     root.classList.add(newActualTheme);
   }, [theme, systemTheme]);
 
+  // Persist theme changes to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, theme);
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, [theme, storageKey]);
+
   const value = {
     theme,
     systemTheme,
     actualTheme,
+    setTheme,
   };
 
   return (
