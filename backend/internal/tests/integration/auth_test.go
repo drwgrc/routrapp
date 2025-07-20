@@ -121,7 +121,7 @@ func TestAuthHandler_Register(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			jsonBody, _ := json.Marshal(tc.request)
-			req := httptest.NewRequest("POST", "/api/v1/auth/register", bytes.NewBuffer(jsonBody))
+			req := httptest.NewRequest("POST", "/api/v1/auth/register-user", bytes.NewBuffer(jsonBody))
 			req.Header.Set("Content-Type", "application/json")
 
 			w := httptest.NewRecorder()

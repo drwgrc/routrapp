@@ -648,8 +648,8 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	})
 }
 
-// Register handles POST /api/v1/auth/register
-func (h *AuthHandler) Register(c *gin.Context) {
+// RegisterOrganization handles POST /api/v1/auth/register
+func (h *AuthHandler) RegisterOrganization(c *gin.Context) {
 	var req validation.RegistrationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.WithContext(c).Errorf("Invalid registration request: %v", err)

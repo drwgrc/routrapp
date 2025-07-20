@@ -28,7 +28,8 @@ func (a *App) RegisterRoutes() {
 			// Auth endpoints (no authentication required for registration and login)
 			auth := v1.Group("/auth")
 			{
-				auth.POST("/register", authHandler.Register)              // POST /api/v1/auth/register
+				auth.POST("/register", authHandler.RegisterOrganization)  // POST /api/v1/auth/register (organization registration)
+				auth.POST("/register-user", authHandler.Register)         // POST /api/v1/auth/register-user (user registration to existing org)
 				auth.POST("/login", authHandler.Login)                    // POST /api/v1/auth/login
 				auth.POST("/refresh", authHandler.RefreshToken)           // POST /api/v1/auth/refresh
 				auth.POST("/logout", middleware.AuthMiddleware(), authHandler.Logout) // POST /api/v1/auth/logout (requires auth)
