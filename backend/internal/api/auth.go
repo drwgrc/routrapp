@@ -315,10 +315,22 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	// Flag to track if panic recovery has been triggered
+	var panicRecovered bool
 	defer func() {
 		if r := recover(); r != nil {
+			panicRecovered = true
 			tx.Rollback()
 			logger.WithContext(c).Errorf("Panic in registration transaction: %v", r)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusInternalServerError,
+					"Registration failed due to internal error",
+					map[string]interface{}{
+						"code": "INTERNAL_PANIC_ERROR",
+					},
+				),
+			})
 		}
 	}()
 
@@ -551,6 +563,11 @@ func (h *AuthHandler) Register(c *gin.Context) {
 				},
 			),
 		})
+		return
+	}
+
+	// Check if panic was recovered before attempting commit
+	if panicRecovered {
 		return
 	}
 
