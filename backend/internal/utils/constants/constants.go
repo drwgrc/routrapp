@@ -21,12 +21,12 @@ const (
 )
 
 // JWT_SECRET returns the JWT secret from environment or default value
-var JWT_SECRET = func() string {
+func JWT_SECRET() string {
 	if secret := os.Getenv("JWT_SECRET"); secret != "" {
 		return secret
 	}
 	return DEFAULT_JWT_SECRET
-}()
+}
 
 const (
 	// Server defaults

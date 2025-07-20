@@ -171,4 +171,9 @@ type TechnicianFilterRequest struct {
 	FilterRequest
 	Status []models.TechnicianStatus `form:"status,omitempty" binding:"omitempty,dive,oneof=active inactive on_route on_break off_duty"`
 	Active *bool                     `form:"active,omitempty"`
+}
+
+// RefreshTokenRequest represents request for refreshing access token
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
 } 
