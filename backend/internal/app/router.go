@@ -25,12 +25,14 @@ func (a *App) RegisterRoutes() {
 			// Health check endpoint
 			v1.GET("/health", healthHandler.Check)
 
-			// Auth endpoints (no authentication required)
+			// Auth endpoints (no authentication required for registration and login)
 			auth := v1.Group("/auth")
 			{
-				auth.POST("/login", authHandler.Login)                    // POST /api/v1/auth/login
-				auth.POST("/refresh", authHandler.RefreshToken)           // POST /api/v1/auth/refresh
+				auth.POST("/register", authHandler.Register)             // POST /api/v1/auth/register
+				auth.POST("/login", authHandler.Login)                   // POST /api/v1/auth/login
+				auth.POST("/refresh", authHandler.RefreshToken)          // POST /api/v1/auth/refresh
 				auth.POST("/logout", middleware.AuthMiddleware(), authHandler.Logout) // POST /api/v1/auth/logout (requires auth)
+				auth.POST("/change-password", middleware.AuthMiddleware(), authHandler.ChangePassword) // POST /api/v1/auth/change-password (requires auth)
 			}
 
 			// User endpoints for testing error scenarios

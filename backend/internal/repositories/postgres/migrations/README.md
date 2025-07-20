@@ -1,6 +1,6 @@
 # Database Migrations
 
-This directory contains database migration files for the RoutRapp application.
+This directory contains database migration files for the RoutrApp application.
 
 ## Migration Structure
 
