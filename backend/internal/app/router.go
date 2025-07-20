@@ -1,17 +1,17 @@
 package app
 
 import (
-	"routrapp-api/internal/handlers"
+	"routrapp-api/internal/api"
 )
 
 // RegisterRoutes registers all application routes
 func (a *App) RegisterRoutes() {
 	// Health check endpoint
-	healthHandler := handlers.NewHealthHandler(a.db)
+	healthHandler := api.NewHealthHandler(a.db)
 	a.router.GET("/health", healthHandler.Check)
 
 	// User handler for testing error scenarios
-	userHandler := handlers.NewUserHandler()
+	userHandler := api.NewUserHandler()
 
 	// API group
 	api := a.router.Group("/api")
