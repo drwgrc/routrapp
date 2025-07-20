@@ -2,6 +2,7 @@ package app
 
 import (
 	"routrapp-api/internal/api"
+	"routrapp-api/internal/middleware"
 )
 
 // RegisterRoutes registers all application routes
@@ -12,6 +13,9 @@ func (a *App) RegisterRoutes() {
 	// User handler for testing error scenarios
 	userHandler := api.NewUserHandler()
 
+	// Auth handler
+	authHandler := api.NewAuthHandler(a.db)
+
 	// API group
 	api := a.router.Group("/api")
 	{
@@ -20,6 +24,14 @@ func (a *App) RegisterRoutes() {
 		{
 			// Health check endpoint
 			v1.GET("/health", healthHandler.Check)
+
+			// Auth endpoints (no authentication required)
+			auth := v1.Group("/auth")
+			{
+				auth.POST("/login", authHandler.Login)                    // POST /api/v1/auth/login
+				auth.POST("/refresh", authHandler.RefreshToken)           // POST /api/v1/auth/refresh
+				auth.POST("/logout", middleware.AuthMiddleware(), authHandler.Logout) // POST /api/v1/auth/logout (requires auth)
+			}
 
 			// User endpoints for testing error scenarios
 			users := v1.Group("/users")
