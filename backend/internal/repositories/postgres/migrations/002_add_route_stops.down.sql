@@ -6,5 +6,15 @@
 -- Remove migration record
 DELETE FROM schema_migrations WHERE version = 2;
 
--- Drop the route_stops table
-DROP TABLE IF EXISTS route_stops; 
+-- Remove constraint
+ALTER TABLE IF EXISTS route_stops DROP CONSTRAINT IF EXISTS unique_route_stop_sequence;
+
+-- Drop indices
+DROP INDEX IF EXISTS idx_route_stops_deleted_at;
+DROP INDEX IF EXISTS idx_route_stops_completed;
+DROP INDEX IF EXISTS idx_route_stops_sequence;
+DROP INDEX IF EXISTS idx_route_stops_route_id;
+DROP INDEX IF EXISTS idx_route_stops_organization_id;
+
+-- Drop table
+DROP TABLE IF EXISTS route_stops CASCADE; 

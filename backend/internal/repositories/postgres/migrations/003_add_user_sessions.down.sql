@@ -3,6 +3,22 @@
 -- Created: 2025-07-19 00:08:59
 -- Direction: DOWN
 
--- Add your SQL statements here to rollback this migration
--- Example:
--- DROP TABLE IF EXISTS example_table;
+-- Remove migration record
+DELETE FROM schema_migrations WHERE version = 3;
+
+-- Drop route activities table
+DROP INDEX IF EXISTS idx_route_activities_deleted_at;
+DROP INDEX IF EXISTS idx_route_activities_timestamp;
+DROP INDEX IF EXISTS idx_route_activities_technician_id;
+DROP INDEX IF EXISTS idx_route_activities_route_stop_id;
+DROP INDEX IF EXISTS idx_route_activities_route_id;
+DROP INDEX IF EXISTS idx_route_activities_organization_id;
+DROP TABLE IF EXISTS route_activities CASCADE;
+
+-- Drop user sessions table
+DROP INDEX IF EXISTS idx_user_sessions_expires_at;
+DROP INDEX IF EXISTS idx_user_sessions_is_valid;
+DROP INDEX IF EXISTS idx_user_sessions_refresh_token;
+DROP INDEX IF EXISTS idx_user_sessions_user_id;
+DROP INDEX IF EXISTS idx_user_sessions_organization_id;
+DROP TABLE IF EXISTS user_sessions CASCADE;

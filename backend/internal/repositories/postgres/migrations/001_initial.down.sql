@@ -1,17 +1,24 @@
--- Drop indices
-DROP INDEX IF EXISTS idx_routes_deleted_at;
-DROP INDEX IF EXISTS idx_technicians_deleted_at;
-DROP INDEX IF EXISTS idx_tenants_deleted_at;
-DROP INDEX IF EXISTS idx_users_deleted_at;
-DROP INDEX IF EXISTS idx_routes_date;
-DROP INDEX IF EXISTS idx_routes_tenant_id;
-DROP INDEX IF EXISTS idx_routes_technician_id;
-DROP INDEX IF EXISTS idx_technicians_tenant_id;
-DROP INDEX IF EXISTS idx_technicians_user_id;
-DROP INDEX IF EXISTS idx_users_email;
+-- Migration: initial
+-- Version: 1
+-- Created: 2025-01-17 12:00:00
+-- Direction: DOWN
 
--- Drop tables (in reverse order of creation to handle references)
-DROP TABLE IF EXISTS routes;
-DROP TABLE IF EXISTS technicians;
-DROP TABLE IF EXISTS tenants;
-DROP TABLE IF EXISTS users; 
+-- Remove initial migration record
+DELETE FROM schema_migrations WHERE version = 1;
+
+-- Drop tables in reverse order to handle foreign key constraints
+-- Note: route_activities and route_stops are handled by subsequent migrations
+-- Drop routes (depend on technicians)
+DROP TABLE IF EXISTS routes CASCADE;
+
+-- Drop technicians (depend on users)
+DROP TABLE IF EXISTS technicians CASCADE;
+
+-- Drop users (depend on organizations)
+DROP TABLE IF EXISTS users CASCADE;
+
+-- Drop organizations (root entity)
+DROP TABLE IF EXISTS organizations CASCADE;
+
+-- Drop the migrations tracking table last
+DROP TABLE IF EXISTS schema_migrations CASCADE; 

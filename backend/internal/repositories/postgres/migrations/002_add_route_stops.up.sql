@@ -6,29 +6,39 @@
 -- Add route stops table for managing multiple stops in a route
 CREATE TABLE IF NOT EXISTS route_stops (
     id SERIAL PRIMARY KEY,
+    organization_id INTEGER NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     route_id INTEGER REFERENCES routes(id) ON DELETE CASCADE,
-    stop_order INTEGER NOT NULL,
-    location_name VARCHAR(255) NOT NULL,
-    location_lat DECIMAL(10, 8) NOT NULL,
-    location_lng DECIMAL(11, 8) NOT NULL,
-    estimated_arrival_time TIMESTAMP,
-    actual_arrival_time TIMESTAMP,
+    name VARCHAR(100) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    lat DECIMAL(10, 8) NOT NULL,
+    lng DECIMAL(11, 8) NOT NULL,
+    sequence_num INTEGER NOT NULL,
+    stop_type VARCHAR(20),
+    duration INTEGER, -- estimated time at stop in minutes
     notes TEXT,
-    status VARCHAR(50) DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    start_time TIMESTAMP WITH TIME ZONE,
+    end_time TIMESTAMP WITH TIME ZONE,
+    is_completed BOOLEAN DEFAULT false,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    photos_count INTEGER DEFAULT 0,
+    notes_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP WITH TIME ZONE
 );
 
 -- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_route_stops_organization_id ON route_stops(organization_id);
 CREATE INDEX IF NOT EXISTS idx_route_stops_route_id ON route_stops(route_id);
-CREATE INDEX IF NOT EXISTS idx_route_stops_order ON route_stops(route_id, stop_order);
-CREATE INDEX IF NOT EXISTS idx_route_stops_status ON route_stops(status);
+CREATE INDEX IF NOT EXISTS idx_route_stops_sequence ON route_stops(route_id, sequence_num);
+CREATE INDEX IF NOT EXISTS idx_route_stops_completed ON route_stops(is_completed);
+CREATE INDEX IF NOT EXISTS idx_route_stops_deleted_at ON route_stops(deleted_at);
 
--- Add constraint to ensure stop order is unique within a route
-ALTER TABLE route_stops ADD CONSTRAINT unique_route_stop_order 
-UNIQUE (route_id, stop_order);
+-- Add constraint to ensure stop sequence is unique within a route
+ALTER TABLE route_stops ADD CONSTRAINT unique_route_stop_sequence 
+UNIQUE (route_id, sequence_num);
 
 -- Insert migration record
 INSERT INTO schema_migrations (version, description) 
-VALUES (2, 'Add route_stops table for managing multiple stops per route')
+VALUES (2, 'Add route_stops table with multi-tenant support')
 ON CONFLICT (version) DO NOTHING; 
