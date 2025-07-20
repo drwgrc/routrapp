@@ -2,7 +2,9 @@ package models
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // RoleType represents the role type enumeration
@@ -72,25 +74,53 @@ func (Role) TableName() string {
 
 // HasPermission checks if the role has a specific permission
 func (r *Role) HasPermission(permission string) bool {
-	// This is a simplified implementation
-	// In a real system, you'd parse the JSON permissions field
-	switch r.Name {
-	case RoleTypeOwner:
-		return true // Owner has all permissions
-	case RoleTypeTechnician:
-		// Technicians have limited permissions
-		techPermissions := []string{
-			"routes.read",
-			"routes.update_status",
-			"technicians.read_own",
-			"technicians.update_own",
+	// Parse the JSON permissions from the database
+	var permissions []string
+	if r.Permissions != "" {
+		if err := json.Unmarshal([]byte(r.Permissions), &permissions); err != nil {
+			// If JSON parsing fails, fall back to default permissions for the role type
+			return r.hasDefaultPermission(permission)
 		}
-		for _, perm := range techPermissions {
-			if perm == permission {
-				return true
-			}
+	} else {
+		// If no permissions are stored, use default permissions for the role type
+		return r.hasDefaultPermission(permission)
+	}
+
+	// Check if the permission is explicitly granted
+	for _, perm := range permissions {
+		if r.permissionMatches(perm, permission) {
+			return true
 		}
 	}
+
+	return false
+}
+
+// hasDefaultPermission checks if the permission is granted by default for the role type
+func (r *Role) hasDefaultPermission(permission string) bool {
+	defaultPerms := GetDefaultPermissions(r.Name)
+	for _, perm := range defaultPerms {
+		if r.permissionMatches(perm, permission) {
+			return true
+		}
+	}
+	return false
+}
+
+// permissionMatches checks if a stored permission matches the requested permission
+// Supports wildcard permissions (e.g., "routes.*" matches "routes.read")
+func (r *Role) permissionMatches(storedPerm, requestedPerm string) bool {
+	// Exact match
+	if storedPerm == requestedPerm {
+		return true
+	}
+
+	// Wildcard match (e.g., "routes.*" matches "routes.read")
+	if strings.HasSuffix(storedPerm, ".*") {
+		prefix := strings.TrimSuffix(storedPerm, ".*")
+		return strings.HasPrefix(requestedPerm, prefix+".")
+	}
+
 	return false
 }
 
