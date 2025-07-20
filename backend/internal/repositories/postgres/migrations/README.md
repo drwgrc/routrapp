@@ -113,6 +113,7 @@ DROP TABLE IF EXISTS user_sessions;
 | 001     | initial           | Creates base multi-tenant schema (organizations, users, technicians, routes) |
 | 002     | add_route_stops   | Adds route_stops table for multi-stop routes with constraints                |
 | 003     | add_user_sessions | Adds user_sessions and route_activities tables                               |
+| 004     | add_roles_table   | Adds roles table for RBAC and updates user role relationships                |
 
 ## Migration Issues Fixed (2025-01-17)
 
@@ -131,6 +132,7 @@ The migration system now follows a clean incremental approach:
 - **001_initial**: Core multi-tenant foundation (organizations, users, technicians, routes)
 - **002_add_route_stops**: Route stops functionality
 - **003_add_user_sessions**: Authentication and activity tracking
+- **004_add_roles_table**: Role-Based Access Control (RBAC) with proper user role relationships
 
 ## Future Development
 
