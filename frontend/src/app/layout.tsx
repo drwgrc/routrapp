@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css";
 import { AppProviders } from "@/providers/app-providers";
+import { ClientAuthWrapper } from "@/components/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +16,18 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "RoutrApp - Route Management System",
-  description: "Optimizing routes for utility and trade companies",
+  description:
+    "Multi-tenant route optimization system for utility and trade companies",
+};
+
+// Define route-specific permissions
+const routePermissions: Record<string, string[]> = {
+  "/admin": ["organizations.*"],
+  "/admin/users": ["users.*"],
+  "/admin/technicians": ["technicians.*"],
+  "/admin/routes": ["routes.*"],
+  "/technician": ["routes.read"],
+  "/technician/routes": ["routes.read"],
 };
 
 export default function RootLayout({
@@ -28,7 +40,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          <ClientAuthWrapper routePermissions={routePermissions}>
+            {children}
+          </ClientAuthWrapper>
+        </AppProviders>
       </body>
     </html>
   );
