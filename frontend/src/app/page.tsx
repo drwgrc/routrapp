@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { MainLayout } from "@/components/layout";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/styles/components/ui/card";
+} from "@/components/ui/card";
+import { useTheme } from "@/components/theme-provider";
 
 interface ApiStatus {
   status: number | null;
@@ -21,41 +23,31 @@ export default function Home() {
     loading: true,
     error: null,
   });
+  const { systemTheme, actualTheme } = useTheme();
 
   const getStatusColor = (status: number | null): string => {
-    if (!status) return "text-gray-500";
-
+    if (status === null) return "text-gray-500";
     if (status >= 200 && status < 300) return "text-green-500";
-    if (status >= 400 && status < 500) {
-      if (status === 404) return "text-yellow-500";
-      return "text-red-500";
-    }
+    if (status >= 400 && status < 500) return "text-yellow-500";
     if (status >= 500) return "text-red-500";
-    return "text-blue-500";
+    return "text-gray-500";
   };
 
   const getStatusText = (status: number | null): string => {
-    if (!status) return "Unknown";
-
+    if (status === null) return "Unknown";
     if (status >= 200 && status < 300) return "Healthy";
-    if (status >= 400 && status < 500) return "Client Error";
-    if (status >= 500) return "Server Error";
-    return "Info";
+    if (status >= 400 && status < 500) return "Warning";
+    if (status >= 500) return "Error";
+    return "Unknown";
   };
 
   useEffect(() => {
     const checkApiStatus = async () => {
       try {
+        setApiStatus(prev => ({ ...prev, loading: true, error: null }));
         const apiBaseUrl =
           process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080";
-
-        const response = await fetch(apiBaseUrl, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
+        const response = await fetch(`${apiBaseUrl}/api/v1/health`);
         setApiStatus({
           status: response.status,
           loading: false,
@@ -74,57 +66,124 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle>API Status</CardTitle>
-          <CardDescription>
-            Checking connection to backend service
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center space-y-4">
-          {apiStatus.loading ? (
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
-            </div>
-          ) : apiStatus.error ? (
-            <div className="space-y-2">
-              <div className="text-red-500 font-semibold text-lg">
-                Connection Failed
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                {apiStatus.error}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div
-                className={`font-bold text-3xl ${getStatusColor(
-                  apiStatus.status
-                )}`}
-              >
-                {apiStatus.status}
-              </div>
-              <div
-                className={`font-semibold ${getStatusColor(apiStatus.status)}`}
-              >
-                {getStatusText(apiStatus.status)}
-              </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                {process.env.NEXT_PUBLIC_API_BASE_URL ||
-                  "http://localhost:8080"}
-              </div>
-            </div>
-          )}
+    <MainLayout>
+      <div className="space-y-6">
+        {/* Welcome Section */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">
+            Welcome to RoutrApp
+          </h1>
+          <p className="text-muted-foreground">
+            Your route optimization platform for utility and trade companies.
+          </p>
+        </div>
 
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-          >
-            Refresh Status
-          </button>
-        </CardContent>
-      </Card>
-    </div>
+        {/* Status Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {/* API Status Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">API Status</CardTitle>
+              <div
+                className={`h-2 w-2 rounded-full ${
+                  apiStatus.loading
+                    ? "bg-gray-400 animate-pulse"
+                    : apiStatus.status &&
+                        apiStatus.status >= 200 &&
+                        apiStatus.status < 300
+                      ? "bg-green-500"
+                      : "bg-red-500"
+                }`}
+              />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {apiStatus.loading ? (
+                  <span className="text-gray-500">Checking...</span>
+                ) : (
+                  <span className={getStatusColor(apiStatus.status)}>
+                    {getStatusText(apiStatus.status)}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {apiStatus.error
+                  ? `Error: ${apiStatus.error}`
+                  : apiStatus.status
+                    ? `HTTP ${apiStatus.status}`
+                    : "Backend connection status"}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Theme Status Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Theme Status
+              </CardTitle>
+              <div
+                className={`h-2 w-2 rounded-full ${actualTheme === "dark" ? "bg-gray-700" : "bg-yellow-400"}`}
+              />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold capitalize">{actualTheme}</div>
+              <p className="text-xs text-muted-foreground">
+                System preference: {systemTheme}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* System Info Card */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Platform</CardTitle>
+              <div className="h-2 w-2 rounded-full bg-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">Web</div>
+              <p className="text-xs text-muted-foreground">
+                Next.js 15 with TypeScript
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+            <CardDescription>
+              Get started with RoutrApp by exploring these key features.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="flex flex-col items-center p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
+                <div className="text-2xl mb-2">🗺️</div>
+                <h3 className="font-semibold">View Routes</h3>
+                <p className="text-sm text-muted-foreground text-center">
+                  Manage and optimize your delivery routes
+                </p>
+              </div>
+              <div className="flex flex-col items-center p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
+                <div className="text-2xl mb-2">👥</div>
+                <h3 className="font-semibold">Manage Technicians</h3>
+                <p className="text-sm text-muted-foreground text-center">
+                  Add and manage your field technicians
+                </p>
+              </div>
+              <div className="flex flex-col items-center p-4 border rounded-lg hover:bg-accent transition-colors cursor-pointer">
+                <div className="text-2xl mb-2">📊</div>
+                <h3 className="font-semibold">View Analytics</h3>
+                <p className="text-sm text-muted-foreground text-center">
+                  Track performance and efficiency metrics
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </MainLayout>
   );
 }
