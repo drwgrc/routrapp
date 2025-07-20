@@ -135,9 +135,8 @@ export {
 
 The API client uses environment variables for configuration:
 
-- `NEXT_PUBLIC_API_URL` - Base API URL (defaults to 'http://localhost:8080/api')
+- `NEXT_PUBLIC_API_BASE_URL` - Base API URL (defaults to 'http://localhost:8080/api')
 - `NEXT_PUBLIC_API_VERSION` - API version (defaults to 'v1')
-- `NEXT_PUBLIC_BASE_URL` - Base Backend URL (default to 'http://localhost:8080')
 
 These can be set in `.env.local` or other appropriate environment files.
 
