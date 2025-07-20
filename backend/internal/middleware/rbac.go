@@ -273,22 +273,6 @@ func RequireAnyPermission(permissions ...string) gin.HandlerFunc {
 // RequireAllPermissions creates middleware that requires all specified permissions
 func RequireAllPermissions(permissions ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// If no permissions specified, deny access - this is a security measure
-		// to prevent accidental bypass when middleware is misconfigured
-		if len(permissions) == 0 {
-			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"error": errors.NewAppErrorWithDetails(
-					http.StatusForbidden,
-					"No permissions specified for authorization check",
-					map[string]interface{}{
-						"code": "MISSING_PERMISSIONS_CONFIG",
-						"hint": "RequireAllPermissions() must be called with at least one permission",
-					},
-				),
-			})
-			return
-		}
-
 		userID, exists := GetUserID(c)
 		if !exists {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
@@ -325,6 +309,22 @@ func RequireAllPermissions(permissions ...string) gin.HandlerFunc {
 					"User role not found",
 					map[string]interface{}{
 						"code": "MISSING_USER_ROLE",
+					},
+				),
+			})
+			return
+		}
+
+		// If no permissions specified, deny access - this is a security measure
+		// to prevent accidental bypass when middleware is misconfigured
+		if len(permissions) == 0 {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusForbidden,
+					"No permissions specified for authorization check",
+					map[string]interface{}{
+						"code": "MISSING_PERMISSIONS_CONFIG",
+						"hint": "RequireAllPermissions() must be called with at least one permission",
 					},
 				),
 			})
