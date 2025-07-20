@@ -8,7 +8,6 @@ import (
 func (a *App) RegisterRoutes() {
 	// Health check endpoint
 	healthHandler := api.NewHealthHandler(a.db)
-	a.router.GET("/health", healthHandler.Check)
 
 	// User handler for testing error scenarios
 	userHandler := api.NewUserHandler()
@@ -19,6 +18,9 @@ func (a *App) RegisterRoutes() {
 		// API version group
 		v1 := api.Group("/v1")
 		{
+			// Health check endpoint
+			v1.GET("/health", healthHandler.Check)
+
 			// User endpoints for testing error scenarios
 			users := v1.Group("/users")
 			{
