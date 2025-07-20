@@ -344,6 +344,43 @@ func ParseTokenResponse(w *httptest.ResponseRecorder) (*validation.TokenResponse
 	return &response.Data, nil
 }
 
+// MakeRegistrationRequest makes a POST request to /api/v1/auth/register
+func MakeRegistrationRequest(router *gin.Engine, email, password, firstName, lastName, orgName, orgEmail, subDomain string) *httptest.ResponseRecorder {
+	reqBody := validation.RegistrationRequest{
+		Email:             email,
+		Password:          password,
+		FirstName:         firstName,
+		LastName:          lastName,
+		OrganizationName:  orgName,
+		OrganizationEmail: orgEmail,
+		SubDomain:         subDomain,
+	}
+
+	jsonBody, _ := json.Marshal(reqBody)
+	req, _ := http.NewRequest("POST", "/api/v1/auth/register", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	return w
+}
+
+// ParseRegistrationResponse parses a registration response
+func ParseRegistrationResponse(w *httptest.ResponseRecorder) (*validation.RegistrationResponse, error) {
+	var response struct {
+		Success bool                             `json:"success"`
+		Data    validation.RegistrationResponse `json:"data"`
+		Message string                           `json:"message"`
+	}
+
+	err := json.Unmarshal(w.Body.Bytes(), &response)
+	if err != nil {
+		return nil, err
+	}
+
+	return &response.Data, nil
+}
+
 // ParseErrorResponse parses an error response
 func ParseErrorResponse(w *httptest.ResponseRecorder) (map[string]interface{}, error) {
 	var response map[string]interface{}

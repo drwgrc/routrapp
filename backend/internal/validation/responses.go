@@ -55,6 +55,9 @@ type TenantResponse struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 }
 
+// OrganizationResponse represents an organization in API responses (alias for TenantResponse)
+type OrganizationResponse = TenantResponse
+
 // RouteResponse represents a route in API responses
 type RouteResponse struct {
 	BaseResponse
@@ -109,6 +112,16 @@ type LoginResponse struct {
 	RefreshToken string       `json:"refresh_token"`
 	TokenType    string       `json:"token_type"`
 	ExpiresIn    int          `json:"expires_in"`
+}
+
+// RegistrationResponse represents the response for successful registration
+type RegistrationResponse struct {
+	User         UserResponse         `json:"user"`
+	Organization OrganizationResponse `json:"organization"`
+	AccessToken  string               `json:"access_token"`
+	RefreshToken string               `json:"refresh_token"`
+	TokenType    string               `json:"token_type"`
+	ExpiresIn    int                  `json:"expires_in"`
 }
 
 // TokenResponse represents the response for token refresh
