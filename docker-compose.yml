@@ -21,11 +21,16 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: development
     container_name: routrapp-backend
     ports:
       - "8080:8080"
     env_file:
       - ./backend/.env
+    volumes:
+      - ./backend:/app:delegated
+      - backend_go_mod_cache:/go/pkg/mod
+      - backend_go_build_cache:/root/.cache/go-build
     depends_on:
       routrapp-db:
         condition: service_healthy
@@ -48,11 +53,16 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      target: development
     container_name: routrapp-frontend
     ports:
       - "3000:3000"
     env_file:
       - ./frontend/.env
+    volumes:
+      - ./frontend:/app:delegated
+      - /app/node_modules
+      - /app/.next
     depends_on:
       routrapp-backend:
         condition: service_healthy
@@ -73,3 +83,5 @@ services:
 
 volumes:
   postgres_data:
+  backend_go_mod_cache:
+  backend_go_build_cache:

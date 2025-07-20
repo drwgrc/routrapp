@@ -1,11 +1,34 @@
-# Build stage
-FROM golang:1.23.6-alpine AS builder
+# Base stage for both development and production
+FROM golang:1.24-alpine AS base
 
-# Install git and ca-certificates (needed for go mod download)
-RUN apk add --no-cache git ca-certificates
+# Install git, ca-certificates and other tools needed for development
+RUN apk add --no-cache git ca-certificates bash curl
 
 # Set working directory
 WORKDIR /app
+
+# Development stage
+FROM base AS development
+
+# Install inotifyd for file watching
+RUN apk add --no-cache inotify-tools
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# We'll mount the rest of the code as a volume in docker-compose
+
+# Set environment variables for development
+ENV GO_ENV=development
+
+# The dev.sh script will be mounted from the host
+CMD ["sh", "/app/dev.sh"]
+
+# Build stage
+FROM base AS builder
 
 # Copy go mod files
 COPY go.mod go.sum ./
@@ -19,8 +42,8 @@ COPY . .
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/api
 
-# Final stage
-FROM alpine:latest
+# Production stage
+FROM alpine:latest AS production
 
 # Install ca-certificates for HTTPS requests
 RUN apk --no-cache add ca-certificates
@@ -46,6 +69,9 @@ USER appuser
 
 # Expose port
 EXPOSE 8080
+
+# Set environment variables for production
+ENV GO_ENV=production
 
 # Run the application
 CMD ["./main"] 
