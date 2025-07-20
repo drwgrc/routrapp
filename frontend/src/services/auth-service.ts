@@ -27,6 +27,34 @@ interface RegistrationData {
   organizationName: string;
 }
 
+// Helper function to safely access localStorage
+const getFromStorage = (key: string): string | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const setToStorage = (key: string, value: string): void => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+};
+
+const removeFromStorage = (key: string): void => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+};
+
 // Auth service implementation
 const authService = {
   // User login
@@ -38,8 +66,8 @@ const authService = {
       });
 
       // Store tokens in localStorage or secure storage
-      localStorage.setItem("auth_token", response.token);
-      localStorage.setItem("refresh_token", response.refreshToken);
+      setToStorage("auth_token", response.token);
+      setToStorage("refresh_token", response.refreshToken);
 
       return response;
     } catch (error) {
@@ -57,8 +85,8 @@ const authService = {
       console.error("Logout error:", error);
     } finally {
       // Clear local storage regardless of API call success
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("refresh_token");
+      removeFromStorage("auth_token");
+      removeFromStorage("refresh_token");
     }
   },
 
@@ -83,7 +111,7 @@ const authService = {
 
   // Check if user is authenticated
   isAuthenticated: (): boolean => {
-    return !!localStorage.getItem("auth_token");
+    return !!getFromStorage("auth_token");
   },
 
   // Get current user data

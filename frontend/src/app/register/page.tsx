@@ -40,7 +40,6 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors, isValid },
-    watch,
     getValues,
   } = useForm<RegisterFormData>({
     mode: "onChange",
@@ -61,16 +60,10 @@ export default function RegisterPage() {
     }
   }, [isAuthenticated, router]);
 
-  // Clear errors when component mounts or form data changes
-  const emailValue = watch("email");
-  const passwordValue = watch("password");
-
-  useEffect(() => {
-    clearError();
-  }, [emailValue, passwordValue, clearError]);
-
   const onSubmit = async (data: RegisterFormData) => {
     try {
+      // Clear any previous errors before attempting registration
+      clearError();
       await registerUser({
         name: data.name,
         email: data.email,

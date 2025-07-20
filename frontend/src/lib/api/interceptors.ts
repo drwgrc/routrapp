@@ -5,6 +5,25 @@ import {
   AxiosResponse,
 } from "axios";
 
+// Helper functions to safely access localStorage
+const getFromStorage = (key: string): string | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const removeFromStorage = (key: string): void => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+};
+
 /**
  * Configure request interceptors for axios instance
  * @param axiosInstance - The axios instance to configure
@@ -15,7 +34,7 @@ export const setupRequestInterceptors = (
   axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
       // Get token from local storage or other secure storage
-      const token = localStorage.getItem("auth_token");
+      const token = getFromStorage("auth_token");
 
       // If token exists, add to Authorization header
       if (token) {
@@ -45,15 +64,19 @@ export const setupResponseInterceptors = (
       const originalRequest = error.config;
 
       // Handle 401 Unauthorized errors - token expired
-      if (error.response?.status === 401 && originalRequest) {
+      if (
+        error.response?.status === 401 &&
+        originalRequest &&
+        typeof window !== "undefined"
+      ) {
         try {
           // Attempt to refresh the token - implement your token refresh logic here
-          // const refreshToken = localStorage.getItem('refresh_token');
+          // const refreshToken = getFromStorage('refresh_token');
           // Call your refresh token endpoint
           // Update the tokens in storage
 
           // Retry the original request with new token
-          // const token = localStorage.getItem('auth_token');
+          // const token = getFromStorage('auth_token');
           // originalRequest.headers.Authorization = `Bearer ${token}`;
           // return axiosInstance(originalRequest);
 
@@ -62,8 +85,8 @@ export const setupResponseInterceptors = (
           return Promise.reject(error);
         } catch (refreshError) {
           // If refresh token fails, redirect to login
-          localStorage.removeItem("auth_token");
-          localStorage.removeItem("refresh_token");
+          removeFromStorage("auth_token");
+          removeFromStorage("refresh_token");
           window.location.href = "/login";
           return Promise.reject(refreshError);
         }

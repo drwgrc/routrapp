@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+  useState,
+  useEffect,
+} from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import authService from "@/services/auth-service";
 import { queryKeys } from "@/lib/query-client";
@@ -22,12 +28,18 @@ interface AuthProviderProps {
 // Authentication provider component
 export function AuthProvider({ children }: AuthProviderProps) {
   const queryClient = useQueryClient();
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Set mounted state after hydration to prevent SSR mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Query for current user data
   const userQuery = useQuery({
     queryKey: queryKeys.auth.user,
     queryFn: async (): Promise<User | null> => {
-      if (!authService.isAuthenticated()) {
+      if (!isMounted || !authService.isAuthenticated()) {
         return null;
       }
       return await authService.getCurrentUser();
@@ -42,6 +54,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return status !== 401 && status !== 403 && failureCount < 3;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: isMounted, // Only run after mount to prevent SSR issues
   });
 
   // Login mutation
@@ -84,8 +97,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Derived state from queries and mutations
   const user = userQuery.data || null;
-  const isAuthenticated = !!user;
+  const isAuthenticated = !!user && isMounted;
   const isLoading =
+    !isMounted ||
     userQuery.isLoading ||
     loginMutation.isPending ||
     logoutMutation.isPending ||
@@ -112,8 +126,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await registerMutation.mutateAsync(data);
   };
 
+  // Clear error function - mutation reset functions are stable
   const clearError = () => {
-    // Reset all mutation states
     loginMutation.reset();
     logoutMutation.reset();
     registerMutation.reset();

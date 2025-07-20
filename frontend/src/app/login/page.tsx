@@ -31,7 +31,6 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors, isValid },
-    watch,
   } = useForm<LoginFormData>({
     mode: "onChange",
     defaultValues: {
@@ -48,16 +47,10 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, router]);
 
-  // Clear errors when component mounts or email/password changes
-  const emailValue = watch("email");
-  const passwordValue = watch("password");
-
-  useEffect(() => {
-    clearError();
-  }, [emailValue, passwordValue, clearError]);
-
   const onSubmit = async (data: LoginFormData) => {
     try {
+      // Clear any previous errors before attempting login
+      clearError();
       await login({
         email: data.email,
         password: data.password,
