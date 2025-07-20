@@ -1,0 +1,134 @@
+erDiagram
+    Organization {
+        uint id PK
+        string name
+        string sub_domain UK
+        string contact_email
+        string contact_phone
+        string logo_url
+        string primary_color
+        string secondary_color
+        bool active
+        string plan_type
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    
+    Role {
+        uint id PK
+        uint organization_id FK
+        string name
+        string display_name
+        string description
+        string permissions
+        bool active
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    
+    User {
+        uint id PK
+        uint organization_id FK
+        uint role_id FK
+        string email UK
+        string password
+        string first_name
+        string last_name
+        timestamp last_login_at
+        string refresh_token
+        bool active
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    
+    Technician {
+        uint id PK
+        uint organization_id FK
+        uint user_id FK
+        string status
+        string phone_number
+        decimal current_lat
+        decimal current_lng
+        bigint last_location_at
+        text notes
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    
+    Route {
+        uint id PK
+        uint organization_id FK
+        uint technician_id FK
+        string name
+        text description
+        string status
+        timestamp scheduled_date
+        timestamp started_at
+        timestamp completed_at
+        timestamp cancelled_at
+        bool is_optimized
+        decimal total_distance
+        int total_duration
+        text notes
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    
+    RouteStop {
+        uint id PK
+        uint organization_id FK
+        uint route_id FK
+        string name
+        string address
+        decimal lat
+        decimal lng
+        int sequence_num
+        string stop_type
+        int duration
+        text notes
+        timestamp start_time
+        timestamp end_time
+        bool is_completed
+        timestamp completed_at
+        int photos_count
+        int notes_count
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    
+    RouteActivity {
+        uint id PK
+        uint organization_id FK
+        uint route_id FK
+        uint route_stop_id FK
+        uint technician_id FK
+        string activity_type
+        text notes
+        decimal lat
+        decimal lng
+        string photo_url
+        timestamp timestamp
+        timestamp created_at
+        timestamp updated_at
+        timestamp deleted_at
+    }
+    
+    Organization ||--o{ Role : "has many"
+    Organization ||--o{ User : "has many"
+    Organization ||--o{ Technician : "has many"
+    Organization ||--o{ Route : "has many"
+    
+    Role ||--o{ User : "has many"
+    User ||--o| Technician : "may have one"
+    
+    Technician ||--o{ Route : "assigned to"
+    Route ||--o{ RouteStop : "contains"
+    Route ||--o{ RouteActivity : "tracks"
+    RouteStop ||--o{ RouteActivity : "may have"
+    Technician ||--o{ RouteActivity : "performs"
