@@ -1,5 +1,6 @@
 import apiClient from "../lib/api/api-client";
 import { defaultTokenManager } from "../lib/token-manager";
+import type { AuthService } from "../types/auth";
 
 // Auth service types
 interface LoginCredentials {
@@ -35,7 +36,7 @@ interface RegistrationData {
 }
 
 // Enhanced auth service implementation
-const authService = {
+const authService: AuthService = {
   // User login
   login: async (credentials: LoginCredentials): Promise<LoginResponse> => {
     try {
@@ -104,12 +105,36 @@ const authService = {
     }
   },
 
-  // Check if user is authenticated
+  // Check if user is authenticated (async - preferred method)
   isAuthenticated: async (): Promise<boolean> => {
     try {
       return await defaultTokenManager.isAuthenticated();
     } catch (error) {
       console.warn("Error checking authentication status:", error);
+      return false;
+    }
+  },
+
+  // DEPRECATED: Synchronous authentication check for backward compatibility
+  // This method provides a fallback for code that hasn't been migrated to async yet
+  // It performs a basic token existence check without validation
+  // TODO: Remove this method after all code is migrated to use async isAuthenticated()
+  isAuthenticatedSync: (): boolean => {
+    console.warn(
+      "authService.isAuthenticatedSync() is deprecated. " +
+      "Please use 'await authService.isAuthenticated()' instead. " +
+      "This synchronous method only checks token presence, not validity."
+    );
+    
+    try {
+      // Basic synchronous check - only verifies token exists, not if it's valid
+      if (typeof window === "undefined") return false;
+      
+      const accessToken = localStorage.getItem("access_token") || 
+                         localStorage.getItem("auth_token");
+      return !!accessToken;
+    } catch (error) {
+      console.warn("Error in synchronous auth check:", error);
       return false;
     }
   },
@@ -206,3 +231,59 @@ const authService = {
 };
 
 export default authService;
+
+// Migration utility for transitioning from sync to async authentication checks
+export const authMigrationUtils = {
+  /**
+   * Helper function to safely check authentication with fallback for legacy code
+   * This function attempts async authentication first, then falls back to sync if in a non-async context
+   * 
+   * @param preferSync - If true, uses the deprecated sync method (not recommended)
+   * @returns Promise<boolean> for async contexts, boolean for sync contexts
+   * 
+   * @example
+   * // Preferred async usage:
+   * const isAuth = await authMigrationUtils.checkAuth();
+   * 
+   * // Legacy sync usage (not recommended):
+   * const isAuth = authMigrationUtils.checkAuth(true);
+   */
+  checkAuth: (preferSync = false): boolean | Promise<boolean> => {
+    if (preferSync) {
+      console.warn(
+        "Using synchronous authentication check. " +
+        "Please migrate to async: await authService.isAuthenticated()"
+      );
+      return authService.isAuthenticatedSync();
+    }
+    
+    return authService.isAuthenticated();
+  },
+
+  /**
+   * Migration helper that wraps authentication logic to handle both sync and async patterns
+   * This is a temporary helper to ease the migration process
+   * 
+   * @param callback - Function to execute if authenticated
+   * @param useAsync - Whether to use async authentication check (recommended)
+   */
+  withAuth: async (
+    callback: () => void | Promise<void>, 
+    useAsync = true
+  ): Promise<void> => {
+    let isAuth: boolean;
+    
+    if (useAsync) {
+      isAuth = await authService.isAuthenticated();
+    } else {
+      console.warn("Using deprecated sync auth check in withAuth helper");
+      isAuth = authService.isAuthenticatedSync();
+    }
+    
+    if (isAuth) {
+      await callback();
+    } else {
+      console.warn("User not authenticated - callback not executed");
+    }
+  },
+};

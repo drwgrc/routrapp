@@ -49,6 +49,33 @@ export interface TokenInfo {
   timeUntilExpiry: number | null;
 }
 
+// Auth Service interface definitions
+export interface AuthService {
+  // Core authentication methods
+  login(credentials: LoginCredentials): Promise<AuthServiceLoginResponse>;
+  logout(): Promise<void>;
+  register(data: RegistrationData): Promise<{ success: boolean }>;
+  
+  // Authentication status methods
+  isAuthenticated(): Promise<boolean>; // ASYNC - Preferred method
+  
+  /** 
+   * @deprecated Use isAuthenticated() instead. This synchronous method will be removed.
+   * This method only checks token presence, not validity.
+   */
+  isAuthenticatedSync(): boolean; // DEPRECATED - For backward compatibility only
+  
+  // User data methods
+  getCurrentUser(): Promise<User | null>;
+  
+  // Token management methods
+  getAccessToken(): Promise<string | null>;
+  getRefreshToken(): Promise<string | null>;
+  refreshToken(): Promise<boolean>;
+  getTokenInfo(): Promise<TokenInfo>;
+  clearAuthData(): Promise<void>;
+}
+
 // Auth service response types
 export interface AuthServiceLoginResponse {
   token: string; // access_token for backwards compatibility
