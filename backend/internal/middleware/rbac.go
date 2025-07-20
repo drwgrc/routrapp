@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -386,7 +387,7 @@ func RequireResourceOwnership(resourceParam string) gin.HandlerFunc {
 		}
 
 		// Convert userID to string for comparison
-		userIDStr := string(rune(userID))
+		userIDStr := strconv.Itoa(int(userID))
 		if resourceID != userIDStr {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": errors.NewAppErrorWithDetails(
