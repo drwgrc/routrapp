@@ -7,12 +7,12 @@ import (
 
 // UserRegistrationRequest represents request for user registration
 type UserRegistrationRequest struct {
-	Email     string      `json:"email" binding:"required,email,max=100"`
-	Password  string      `json:"password" binding:"required,min=8,max=255"`
-	FirstName string      `json:"first_name" binding:"required,min=1,max=100"`
-	LastName  string      `json:"last_name" binding:"required,min=1,max=100"`
-	Role      models.Role `json:"role" binding:"required,oneof=owner technician"`
-	TenantID  uint        `json:"tenant_id" binding:"required,min=1"`
+	Email     string           `json:"email" binding:"required,email,max=100"`
+	Password  string           `json:"password" binding:"required,min=8,max=255"`
+	FirstName string           `json:"first_name" binding:"required,min=1,max=100"`
+	LastName  string           `json:"last_name" binding:"required,min=1,max=100"`
+	Role      models.RoleType  `json:"role" binding:"required,oneof=owner technician"`
+	TenantID  uint             `json:"tenant_id" binding:"required,min=1"`
 }
 
 // UserLoginRequest represents request for user login
@@ -23,10 +23,10 @@ type UserLoginRequest struct {
 
 // UserUpdateRequest represents request for updating user profile
 type UserUpdateRequest struct {
-	FirstName *string      `json:"first_name,omitempty" binding:"omitempty,min=1,max=100"`
-	LastName  *string      `json:"last_name,omitempty" binding:"omitempty,min=1,max=100"`
-	Role      *models.Role `json:"role,omitempty" binding:"omitempty,oneof=owner technician"`
-	Active    *bool        `json:"active,omitempty"`
+	FirstName *string           `json:"first_name,omitempty" binding:"omitempty,min=1,max=100"`
+	LastName  *string           `json:"last_name,omitempty" binding:"omitempty,min=1,max=100"`
+	Role      *models.RoleType  `json:"role,omitempty" binding:"omitempty,oneof=owner technician"`
+	Active    *bool             `json:"active,omitempty"`
 }
 
 // ChangePasswordRequest represents request for changing user password
@@ -61,12 +61,12 @@ type TenantUpdateRequest struct {
 
 // RouteCreateRequest represents request for creating a new route
 type RouteCreateRequest struct {
-	Name          string                    `json:"name" binding:"required,min=1,max=100"`
-	Description   string                    `json:"description,omitempty" binding:"omitempty,max=1000"`
-	TechnicianID  *uint                     `json:"technician_id,omitempty" binding:"omitempty,min=1"`
-	ScheduledDate *time.Time                `json:"scheduled_date,omitempty"`
-	Notes         string                    `json:"notes,omitempty" binding:"omitempty,max=1000"`
-	Stops         []RouteStopCreateRequest  `json:"stops,omitempty" binding:"omitempty,dive"`
+	Name          string                     `json:"name" binding:"required,min=1,max=100"`
+	Description   string                     `json:"description,omitempty" binding:"omitempty,max=1000"`
+	TechnicianID  *uint                      `json:"technician_id,omitempty" binding:"omitempty,min=1"`
+	ScheduledDate *time.Time                 `json:"scheduled_date,omitempty"`
+	Notes         string                     `json:"notes,omitempty" binding:"omitempty,max=1000"`
+	Stops         []RouteStopCreateRequest   `json:"stops,omitempty" binding:"omitempty,dive"`
 }
 
 // RouteUpdateRequest represents request for updating a route
@@ -190,4 +190,4 @@ type RegistrationRequest struct {
 	OrganizationName  string `json:"organization_name" binding:"required,min=1,max=100"`
 	OrganizationEmail string `json:"organization_email" binding:"required,email,max=100"`
 	SubDomain         string `json:"sub_domain" binding:"required,min=1,max=100,alphanum"`
-} 
+}

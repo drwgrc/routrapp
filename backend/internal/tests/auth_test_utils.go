@@ -77,10 +77,11 @@ func SetupTestContext() (*TestContext, error) {
 	// Setup auth routes
 	authGroup := router.Group("/api/v1/auth")
 	{
-		authGroup.POST("/register", authHandler.Register)
-		authGroup.POST("/login", authHandler.Login)
-		authGroup.POST("/refresh", authHandler.RefreshToken)
-		authGroup.POST("/logout", CreateTestAuthMiddleware(jwtService), authHandler.Logout)
+		authGroup.POST("/register", authHandler.Register)                                              // POST /api/v1/auth/register
+		authGroup.POST("/login", authHandler.Login)                                                    // POST /api/v1/auth/login
+		authGroup.POST("/refresh", authHandler.RefreshToken)                                           // POST /api/v1/auth/refresh
+		authGroup.POST("/logout", CreateTestAuthMiddleware(jwtService), authHandler.Logout)            // POST /api/v1/auth/logout (requires auth)
+		authGroup.POST("/change-password", CreateTestAuthMiddleware(jwtService), authHandler.ChangePassword) // POST /api/v1/auth/change-password (requires auth)
 	}
 
 	return &TestContext{

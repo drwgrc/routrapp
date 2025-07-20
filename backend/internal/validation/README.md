@@ -1,6 +1,6 @@
 # Validation Package
 
-This package provides comprehensive request/response validation for the RoutRapp Go backend using the `github.com/go-playground/validator/v10` library.
+This package provides comprehensive request/response validation for the RoutrApp Go backend using the `github.com/go-playground/validator/v10` library.
 
 ## Overview
 

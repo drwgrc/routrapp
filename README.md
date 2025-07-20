@@ -1,10 +1,10 @@
-# RoutRapp
+# RoutrApp
 
 A modern web application built with Go/Gin backend and Next.js frontend.
 
 ## Project Overview
 
-RoutRapp is a full-stack web application featuring:
+RoutrApp is a full-stack web application featuring:
 
 - **Backend**: Gin-based REST API with Go
 - **Frontend**: Next.js with React, TypeScript, and Tailwind CSS
