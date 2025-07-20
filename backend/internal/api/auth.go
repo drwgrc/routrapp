@@ -107,6 +107,21 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	// Check if user has a valid role
+	if user.Role.Name == "" {
+		logger.WithContext(c).Errorf("User %s has no associated role", req.Email)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"User role configuration error",
+				map[string]interface{}{
+					"code": "ROLE_CONFIGURATION_ERROR",
+				},
+			),
+		})
+		return
+	}
+
 	// Generate tokens
 	accessToken, err := h.jwtService.GenerateAccessToken(user.ID, user.OrganizationID, user.Email, user.Role.Name.String())
 	if err != nil {
@@ -323,6 +338,21 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 				"Invalid refresh token",
 				map[string]interface{}{
 					"code": "INVALID_REFRESH_TOKEN",
+				},
+			),
+		})
+		return
+	}
+
+	// Check if user has a valid role
+	if user.Role.Name == "" {
+		logger.WithContext(c).Errorf("User %d has no associated role during token refresh", user.ID)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": errors.NewAppErrorWithDetails(
+				http.StatusInternalServerError,
+				"User role configuration error",
+				map[string]interface{}{
+					"code": "ROLE_CONFIGURATION_ERROR",
 				},
 			),
 		})
