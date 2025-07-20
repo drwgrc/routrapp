@@ -16,7 +16,7 @@ export function MainLayout({ children, showSidebar = true }: MainLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header setSidebarOpen={setSidebarOpen} />
 
       <div className="flex">
         {showSidebar && (
