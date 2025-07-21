@@ -1,42 +1,11 @@
 import apiClient from "../lib/api/api-client";
-
-// Auth service types
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface LoginResponse {
-  token: string;
-  refreshToken: string;
-  user: UserData;
-}
-
-interface UserData {
-  id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  active: boolean;
-  role: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface RegistrationData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  organizationName: string;
-  organizationEmail: string;
-  subDomain: string;
-}
-
-interface ProfileUpdateData {
-  firstName?: string;
-  lastName?: string;
-}
+import {
+  LoginCredentials,
+  LoginResponse,
+  User as UserData,
+  RegistrationData,
+  ProfileUpdateData,
+} from "@/types/auth";
 
 // Helper function to safely access localStorage
 const getFromStorage = (key: string): string | null => {
@@ -77,8 +46,8 @@ const authService = {
       });
 
       // Store tokens in localStorage or secure storage
-      setToStorage("auth_token", response.token);
-      setToStorage("refresh_token", response.refreshToken);
+      setToStorage("auth_token", response.access_token);
+      setToStorage("refresh_token", response.refresh_token);
 
       return response;
     } catch (error) {

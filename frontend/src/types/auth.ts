@@ -31,6 +31,14 @@ export interface ProfileUpdateData {
   lastName?: string;
 }
 
+export interface LoginResponse {
+  user: User;
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
