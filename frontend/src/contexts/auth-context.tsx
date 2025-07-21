@@ -43,33 +43,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const initializeAuth = async () => {
       try {
-        // Set up token manager event handlers
-        const tokenManager = defaultTokenManager;
-
-        // Handle token refresh events
-        const originalOnTokenRefreshed = tokenManager["onTokenRefreshed"];
-        tokenManager["onTokenRefreshed"] = tokens => {
-          console.log("Token refreshed successfully");
-          originalOnTokenRefreshed?.(tokens);
-        };
-
-        // Handle token refresh failures
-        const originalOnRefreshFailed = tokenManager["onRefreshFailed"];
-        tokenManager["onRefreshFailed"] = error => {
-          console.warn("Token refresh failed:", error);
-          // Clear user data from cache
-          queryClient.setQueryData(queryKeys.auth.user, null);
-          originalOnRefreshFailed?.(error);
-        };
-
-        // Handle token expiration
-        const originalOnTokenExpired = tokenManager["onTokenExpired"];
-        tokenManager["onTokenExpired"] = () => {
-          console.warn("Token expired");
-          // Clear user data and potentially redirect
-          queryClient.setQueryData(queryKeys.auth.user, null);
-          originalOnTokenExpired?.();
-        };
+        // Set up token manager event handlers using the public API
+        defaultTokenManager.setEventHandlers({
+          onTokenRefreshed: () => {
+            console.log("Token refreshed successfully");
+          },
+          onRefreshFailed: error => {
+            console.warn("Token refresh failed:", error);
+            // Clear user data from cache
+            queryClient.setQueryData(queryKeys.auth.user, null);
+          },
+          onTokenExpired: () => {
+            console.warn("Token expired");
+            // Clear user data and potentially redirect
+            queryClient.setQueryData(queryKeys.auth.user, null);
+          },
+        });
 
         setIsInitialized(true);
       } catch (error) {

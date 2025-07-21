@@ -3,9 +3,11 @@
 ## Breaking Change: `authService.isAuthenticated()` is now Async
 
 ### Overview
+
 The `authService.isAuthenticated()` method has been changed from synchronous to asynchronous to support more robust token validation and refresh capabilities. This is a **breaking change** that requires code updates.
 
 ### Before (Synchronous - DEPRECATED)
+
 ```typescript
 // ❌ This no longer works correctly
 if (authService.isAuthenticated()) {
@@ -19,6 +21,7 @@ const isAuth = authService.isAuthenticated();
 ```
 
 ### After (Asynchronous - REQUIRED)
+
 ```typescript
 // ✅ Correct async usage
 if (await authService.isAuthenticated()) {
@@ -35,6 +38,7 @@ if (isAuth) {
 ## Migration Strategies
 
 ### 1. Standard Migration (Recommended)
+
 Update your code to use `await` with the async method:
 
 ```typescript
@@ -56,11 +60,12 @@ async function checkUserAccess() {
 ```
 
 ### 2. Temporary Sync Fallback (For Legacy Code)
+
 If you cannot immediately convert to async, use the deprecated sync method:
 
 ```typescript
 // ⚠️ Temporary solution only - plan to migrate to async
-import { authService } from '@/services';
+import { authService } from "@/services";
 
 if (authService.isAuthenticatedSync()) {
   console.log("User might be authenticated (basic token check only)");
@@ -70,10 +75,11 @@ if (authService.isAuthenticatedSync()) {
 **Important**: `isAuthenticatedSync()` only checks if a token exists in storage. It does NOT validate the token or check if it's expired.
 
 ### 3. Migration Utility (Transition Helper)
+
 Use the migration utility for gradual migration:
 
 ```typescript
-import { authMigrationUtils } from '@/services';
+import { authMigrationUtils } from "@/services";
 
 // Async usage (recommended)
 const isAuth = await authMigrationUtils.checkAuth();
@@ -90,11 +96,12 @@ await authMigrationUtils.withAuth(async () => {
 ## Common Migration Patterns
 
 ### React Components
+
 ```typescript
 // Before
 function MyComponent() {
   const isAuth = authService.isAuthenticated(); // Returns Promise!
-  
+
   if (isAuth) { // This always executes because Promise is truthy
     return <AuthenticatedView />;
   }
@@ -104,7 +111,7 @@ function MyComponent() {
 // After - Option 1: Use useAuth hook (recommended)
 function MyComponent() {
   const { isAuthenticated } = useAuth(); // Already handles async logic
-  
+
   if (isAuthenticated) {
     return <AuthenticatedView />;
   }
@@ -115,7 +122,7 @@ function MyComponent() {
 function MyComponent() {
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     const checkAuth = async () => {
       const authStatus = await authService.isAuthenticated();
@@ -124,7 +131,7 @@ function MyComponent() {
     };
     checkAuth();
   }, []);
-  
+
   if (loading) return <LoadingSpinner />;
   if (isAuth) return <AuthenticatedView />;
   return <LoginForm />;
@@ -132,13 +139,14 @@ function MyComponent() {
 ```
 
 ### Route Guards
+
 ```typescript
 // Before
 function routeGuard(to, from, next) {
   if (authService.isAuthenticated()) {
     next();
   } else {
-    next('/login');
+    next("/login");
   }
 }
 
@@ -147,27 +155,28 @@ async function routeGuard(to, from, next) {
   if (await authService.isAuthenticated()) {
     next();
   } else {
-    next('/login');
+    next("/login");
   }
 }
 ```
 
 ### Conditional API Calls
+
 ```typescript
 // Before
 function makeApiCall() {
   if (authService.isAuthenticated()) {
-    return apiClient.get('/protected-data');
+    return apiClient.get("/protected-data");
   }
-  throw new Error('Not authenticated');
+  throw new Error("Not authenticated");
 }
 
 // After
 async function makeApiCall() {
   if (await authService.isAuthenticated()) {
-    return apiClient.get('/protected-data');
+    return apiClient.get("/protected-data");
   }
-  throw new Error('Not authenticated');
+  throw new Error("Not authenticated");
 }
 ```
 
@@ -187,7 +196,7 @@ If you're using TypeScript, the method signatures have been updated:
 interface AuthService {
   // New signature
   isAuthenticated(): Promise<boolean>;
-  
+
   // Temporary fallback
   isAuthenticatedSync(): boolean; // @deprecated
 }
@@ -199,13 +208,13 @@ Update your tests to handle the async nature:
 
 ```typescript
 // Before
-test('should check authentication', () => {
+test("should check authentication", () => {
   const isAuth = authService.isAuthenticated();
   expect(isAuth).toBe(true);
 });
 
 // After
-test('should check authentication', async () => {
+test("should check authentication", async () => {
   const isAuth = await authService.isAuthenticated();
   expect(isAuth).toBe(true);
 });
@@ -230,6 +239,7 @@ If you encounter issues during migration:
 ## Validation Checklist
 
 After migration, verify:
+
 - [ ] No console warnings about deprecated sync methods
 - [ ] Authentication checks work correctly in all scenarios
 - [ ] No TypeScript errors related to Promise/boolean mismatches

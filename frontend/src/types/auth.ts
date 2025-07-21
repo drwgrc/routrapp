@@ -55,19 +55,19 @@ export interface AuthService {
   login(credentials: LoginCredentials): Promise<AuthServiceLoginResponse>;
   logout(): Promise<void>;
   register(data: RegistrationData): Promise<{ success: boolean }>;
-  
+
   // Authentication status methods
   isAuthenticated(): Promise<boolean>; // ASYNC - Preferred method
-  
-  /** 
+
+  /**
    * @deprecated Use isAuthenticated() instead. This synchronous method will be removed.
    * This method only checks token presence, not validity.
    */
   isAuthenticatedSync(): boolean; // DEPRECATED - For backward compatibility only
-  
+
   // User data methods
   getCurrentUser(): Promise<User | null>;
-  
+
   // Token management methods
   getAccessToken(): Promise<string | null>;
   getRefreshToken(): Promise<string | null>;

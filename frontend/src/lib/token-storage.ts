@@ -87,7 +87,7 @@ class LocalStorage implements TokenStorage {
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && (key.includes("token") || key.includes("auth"))) {
+        if (key && this.isTokenKey(key)) {
           keysToRemove.push(key);
         }
       }
@@ -95,6 +95,25 @@ class LocalStorage implements TokenStorage {
     } catch (error) {
       console.warn("Failed to clear tokens from localStorage:", error);
     }
+  }
+
+  private isTokenKey(key: string): boolean {
+    // More specific matching for actual token keys
+    const tokenPatterns = [
+      /^access_?token$/i,
+      /^refresh_?token$/i,
+      /^id_?token$/i,
+      /^auth_?token$/i,
+      /^bearer_?token$/i,
+      /^jwt_?token$/i,
+      /^session_?token$/i,
+      /^api_?token$/i,
+      /^oauth_?token$/i,
+      /^token$/i,
+      /^auth$/i,
+    ];
+
+    return tokenPatterns.some(pattern => pattern.test(key));
   }
 
   isAvailable(): boolean {
@@ -158,7 +177,7 @@ class SessionStorage implements TokenStorage {
       const keysToRemove: string[] = [];
       for (let i = 0; i < sessionStorage.length; i++) {
         const key = sessionStorage.key(i);
-        if (key && (key.includes("token") || key.includes("auth"))) {
+        if (key && this.isTokenKey(key)) {
           keysToRemove.push(key);
         }
       }
@@ -166,6 +185,25 @@ class SessionStorage implements TokenStorage {
     } catch (error) {
       console.warn("Failed to clear tokens from sessionStorage:", error);
     }
+  }
+
+  private isTokenKey(key: string): boolean {
+    // More specific matching for actual token keys
+    const tokenPatterns = [
+      /^access_?token$/i,
+      /^refresh_?token$/i,
+      /^id_?token$/i,
+      /^auth_?token$/i,
+      /^bearer_?token$/i,
+      /^jwt_?token$/i,
+      /^session_?token$/i,
+      /^api_?token$/i,
+      /^oauth_?token$/i,
+      /^token$/i,
+      /^auth$/i,
+    ];
+
+    return tokenPatterns.some(pattern => pattern.test(key));
   }
 
   isAvailable(): boolean {
@@ -254,13 +292,32 @@ class CookieStorage implements TokenStorage {
       const cookies = document.cookie.split(";");
       for (const cookie of cookies) {
         const [key] = cookie.trim().split("=");
-        if (key.includes("token") || key.includes("auth")) {
+        if (this.isTokenKey(key)) {
           await this.removeToken(key);
         }
       }
     } catch (error) {
       console.warn("Failed to clear tokens from cookies:", error);
     }
+  }
+
+  private isTokenKey(key: string): boolean {
+    // More specific matching for actual token keys
+    const tokenPatterns = [
+      /^access_?token$/i,
+      /^refresh_?token$/i,
+      /^id_?token$/i,
+      /^auth_?token$/i,
+      /^bearer_?token$/i,
+      /^jwt_?token$/i,
+      /^session_?token$/i,
+      /^api_?token$/i,
+      /^oauth_?token$/i,
+      /^token$/i,
+      /^auth$/i,
+    ];
+
+    return tokenPatterns.some(pattern => pattern.test(key));
   }
 
   isAvailable(): boolean {

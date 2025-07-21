@@ -260,6 +260,7 @@ export class TokenManager {
           const refreshedToken = await this.refreshTokenIfNeeded();
           return refreshedToken || accessToken;
         } catch (error) {
+          console.warn("Failed to refresh token:", error);
           // If refresh fails, return the original token if it's still technically valid
           if (!JWTUtils.isExpired(accessToken)) {
             return accessToken;
@@ -495,6 +496,28 @@ export class TokenManager {
     this.isDestroyed = true;
     this.clearRefreshTimer();
     this.refreshQueue.clear();
+  }
+
+  /**
+   * Set event handlers for token lifecycle events
+   */
+  setEventHandlers(handlers: {
+    onTokenRefreshed?: (tokens: {
+      accessToken: string;
+      expiresAt: Date;
+    }) => void;
+    onRefreshFailed?: (error: Error) => void;
+    onTokenExpired?: () => void;
+  }): void {
+    if (handlers.onTokenRefreshed) {
+      this.onTokenRefreshed = handlers.onTokenRefreshed;
+    }
+    if (handlers.onRefreshFailed) {
+      this.onRefreshFailed = handlers.onRefreshFailed;
+    }
+    if (handlers.onTokenExpired) {
+      this.onTokenExpired = handlers.onTokenExpired;
+    }
   }
 
   /**
