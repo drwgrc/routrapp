@@ -12,14 +12,16 @@ import authService from "@/services/auth-service";
 import { queryKeys } from "@/lib/query-client";
 import { defaultTokenManager } from "@/lib/token-manager";
 import {
-  AuthContextValue,
+  ExtendedAuthContextValue,
   LoginCredentials,
   RegistrationData,
   User,
 } from "@/types/auth";
 
 // Create authentication context
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+const AuthContext = createContext<ExtendedAuthContextValue | undefined>(
+  undefined
+);
 
 // Authentication provider props
 interface AuthProviderProps {
@@ -187,7 +189,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     checkAuth();
-  }, [isMounted, isInitialized, user]);
+  }, [isMounted, isInitialized]); // Removed 'user' dependency to prevent infinite loop
 
   const isAuthenticated = authStatus === "authenticated";
 
@@ -233,15 +235,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Enhanced context value with additional utilities
-  const contextValue: AuthContextValue & {
-    getTokenInfo: () => Promise<{
-      accessToken: string | null;
-      isExpired: boolean;
-      expiresAt: Date | null;
-      timeUntilExpiry: number | null;
-    }>;
-    refreshToken: () => Promise<boolean>;
-  } = {
+  const contextValue: ExtendedAuthContextValue = {
     user,
     isAuthenticated,
     isLoading,
@@ -262,7 +256,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 }
 
 // Custom hook for using authentication context
-export function useAuth(): AuthContextValue {
+export function useAuth(): ExtendedAuthContextValue {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
