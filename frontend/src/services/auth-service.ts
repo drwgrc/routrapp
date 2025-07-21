@@ -144,7 +144,7 @@ const authService: AuthService = {
   getCurrentUser: async (): Promise<UserData | null> => {
     try {
       // Check if user is authenticated first
-      const isAuth = await authService.isAuthenticated();
+      const isAuth = await defaultTokenManager.isAuthenticated();
       if (!isAuth) {
         return null;
       }
