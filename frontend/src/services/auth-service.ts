@@ -258,7 +258,7 @@ export const authMigrationUtils = {
       return authService.isAuthenticatedSync();
     }
 
-    return authService.isAuthenticated();
+    return defaultTokenManager.isAuthenticated();
   },
 
   /**
@@ -275,7 +275,7 @@ export const authMigrationUtils = {
     let isAuth: boolean;
 
     if (useAsync) {
-      isAuth = await authService.isAuthenticated();
+      isAuth = await defaultTokenManager.isAuthenticated();
     } else {
       console.warn("Using deprecated sync auth check in withAuth helper");
       isAuth = authService.isAuthenticatedSync();
