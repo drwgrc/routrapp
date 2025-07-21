@@ -13,9 +13,7 @@ import {
   CheckCircle,
   AlertCircle,
   Eye,
-  User,
   Route,
-  Settings,
 } from "lucide-react";
 
 export default function TechnicianDashboard() {

@@ -14,11 +14,7 @@ import {
   ReadOnly,
   RoleConditionalRender,
   PermissionConditionalRender,
-  CombinedConditionalRender,
-  CustomConditionalRender,
   AdminConditionalRender,
-  ManagementConditionalRender,
-  ReadOnlyConditionalRender,
 } from "@/components/auth";
 import { useVisibility } from "@/hooks/use-visibility";
 import { useAuth } from "@/contexts/auth-context";
@@ -32,10 +28,7 @@ import {
   Eye,
   EyeOff,
   Plus,
-  Edit,
-  Trash2,
   Download,
-  Upload,
   Bell,
   HelpCircle,
 } from "lucide-react";

@@ -22,6 +22,15 @@ const eslintConfig = [
       // Disable ESLint rules that conflict with Prettier
       "arrow-body-style": "off",
       "prefer-arrow-callback": "off",
+      // Allow unused variables that start with underscore
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
     },
   },
 ];

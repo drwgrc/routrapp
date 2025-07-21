@@ -84,7 +84,7 @@ export function RoleConditionalRender({
   className = "",
   requireAllRoles = false,
 }: RoleConditionalRenderProps) {
-  const { user, isLoading, error } = useAuth();
+  const { isLoading, error } = useAuth();
   const { hasAnyRole, hasRole } = usePermissions();
 
   // Show loading state while auth is loading

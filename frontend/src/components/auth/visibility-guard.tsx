@@ -48,12 +48,12 @@ export function RoleVisibility({
   children,
   allowedRoles,
   fallback = null,
-  loadingFallback = null,
+  loadingFallback: _loadingFallback = null,
   inverse = false,
-  showOnError = false,
+  showOnError: _showOnError = false,
   requireAllRoles = false,
 }: RoleVisibilityProps) {
-  const { hasAnyRole, hasRole, isOwner, isTechnician } = usePermissions();
+  const { hasAnyRole, hasRole } = usePermissions();
 
   // Determine if user has required roles
   const hasRequiredRoles = requireAllRoles
@@ -83,9 +83,9 @@ export function PermissionVisibility({
   children,
   requiredPermissions,
   fallback = null,
-  loadingFallback = null,
+  loadingFallback: _loadingFallback = null,
   inverse = false,
-  showOnError = false,
+  showOnError: _showOnError = false,
   requireAllPermissions = false,
 }: PermissionVisibilityProps) {
   const { hasAnyPermission, hasPermission } = usePermissions();
@@ -117,9 +117,9 @@ export function CombinedVisibility({
   allowedRoles,
   requiredPermissions,
   fallback = null,
-  loadingFallback = null,
+  loadingFallback: _loadingFallback = null,
   inverse = false,
-  showOnError = false,
+  showOnError: _showOnError = false,
   requireAllRoles = false,
   requireAllPermissions = false,
   logic = "OR",
@@ -173,9 +173,9 @@ export function ConditionalVisibility({
   children,
   condition,
   fallback = null,
-  loadingFallback = null,
+  loadingFallback: _loadingFallback = null,
   inverse = false,
-  showOnError = false,
+  showOnError: _showOnError = false,
 }: ConditionalVisibilityProps) {
   const shouldRender = inverse ? !condition() : condition();
 
@@ -200,13 +200,13 @@ interface FeatureFlagProps extends BaseVisibilityProps {
 
 export function FeatureFlag({
   children,
-  feature,
+  feature: _feature,
   enabledFor,
   enabledWithPermissions,
   fallback = null,
-  loadingFallback = null,
+  loadingFallback: _loadingFallback = null,
   inverse = false,
-  showOnError = false,
+  showOnError: _showOnError = false,
 }: FeatureFlagProps) {
   const { hasAnyRole, hasAnyPermission } = usePermissions();
 

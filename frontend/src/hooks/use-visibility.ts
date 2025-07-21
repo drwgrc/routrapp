@@ -3,21 +3,14 @@
 import { useMemo } from "react";
 import { usePermissions } from "./use-permissions";
 import { useAuth } from "@/contexts/auth-context";
-import { UserRole } from "@/types/auth";
 
 /**
  * Advanced visibility logic hook
  * Provides utilities for complex visibility scenarios and business logic
  */
 export function useVisibility() {
-  const {
-    hasRole,
-    hasAnyRole,
-    hasPermission,
-    hasAnyPermission,
-    isOwner,
-    isTechnician,
-  } = usePermissions();
+  const { hasPermission, hasAnyPermission, isOwner, isTechnician } =
+    usePermissions();
   const { user, isAuthenticated } = useAuth();
 
   const visibilityUtils = useMemo(() => {
@@ -335,8 +328,6 @@ export function useVisibility() {
       canAccessDocumentation,
     };
   }, [
-    hasRole,
-    hasAnyRole,
     hasPermission,
     hasAnyPermission,
     isOwner,
