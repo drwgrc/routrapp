@@ -26,6 +26,19 @@ export interface RegistrationData {
   subDomain: string;
 }
 
+export interface ProfileUpdateData {
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface LoginResponse {
+  user: User;
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+}
+
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -88,6 +101,7 @@ export interface AuthContextValue extends AuthState {
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => Promise<void>;
   register: (data: RegistrationData) => Promise<void>;
+  updateProfile: (data: ProfileUpdateData) => Promise<void>;
   clearError: () => void;
   refreshUser: () => Promise<void>;
 }

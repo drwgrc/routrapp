@@ -1,5 +1,5 @@
 import {
-  TechnicianPage,
+  TechnicianPageWithLayout,
   PermissionGuard,
   RoleVisibility,
   PermissionVisibility,
@@ -18,7 +18,7 @@ import {
 
 export default function TechnicianDashboard() {
   return (
-    <TechnicianPage
+    <TechnicianPageWithLayout
       title="Technician Dashboard"
       description="View your routes and update job status"
     >
@@ -171,7 +171,7 @@ export default function TechnicianDashboard() {
           </CardContent>
         </Card>
       </div>
-    </TechnicianPage>
+    </TechnicianPageWithLayout>
   );
 }
 

@@ -10,10 +10,85 @@ import (
 	"routrapp-api/internal/utils/constants"
 )
 
-// AuthMiddleware validates JWT tokens and sets user context
+// AuthMiddleware validates JWT tokens and sets user context using default JWT service
 func AuthMiddleware() gin.HandlerFunc {
 	jwtService := auth.DefaultJWTService()
 	
+	return func(c *gin.Context) {
+		// Extract token from Authorization header
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusUnauthorized,
+					"Authorization header is required",
+					map[string]interface{}{
+						"code": "MISSING_AUTH_HEADER",
+					},
+				),
+			})
+			return
+		}
+
+		// Extract the token from Bearer prefix
+		tokenString, err := auth.ExtractTokenFromHeader(authHeader)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusUnauthorized,
+					"Invalid authorization header format: "+err.Error(),
+					map[string]interface{}{
+						"code": "INVALID_AUTH_HEADER",
+					},
+				),
+			})
+			return
+		}
+
+		// Validate the token
+		claims, err := jwtService.ValidateToken(tokenString)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusUnauthorized,
+					"Invalid or expired token: "+err.Error(),
+					map[string]interface{}{
+						"code": "INVALID_TOKEN",
+					},
+				),
+			})
+			return
+		}
+
+		// Ensure this is an access token (not a refresh token)
+		if !claims.IsAccessToken() {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": errors.NewAppErrorWithDetails(
+					http.StatusUnauthorized,
+					"Access token required",
+					map[string]interface{}{
+						"code": "INVALID_TOKEN_TYPE",
+					},
+				),
+			})
+			return
+		}
+
+		// Set user context in Gin context
+		c.Set(constants.USER_CONTEXT_KEY, claims.GetUserContext())
+		
+		// Also set individual claims for easy access
+		c.Set("user_id", claims.UserID)
+		c.Set("organization_id", claims.OrganizationID)
+		c.Set("user_email", claims.Email)
+		c.Set("user_role", claims.Role)
+
+		c.Next()
+	}
+}
+
+// AuthMiddlewareWithJWT validates JWT tokens and sets user context using provided JWT service
+func AuthMiddlewareWithJWT(jwtService *auth.JWTService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Extract token from Authorization header
 		authHeader := c.GetHeader("Authorization")

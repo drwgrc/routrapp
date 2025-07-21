@@ -1,39 +1,11 @@
 import apiClient from "../lib/api/api-client";
-import { defaultTokenManager } from "../lib/token-manager";
-import type { AuthService } from "../types/auth";
-
-// Auth service types
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface LoginResponse {
-  token: string;
-  refreshToken: string;
-  user: UserData;
-}
-
-interface UserData {
-  id: number;
-  email: string;
-  first_name: string;
-  last_name: string;
-  active: boolean;
-  role: string;
-  created_at: string;
-  updated_at: string;
-}
-
-interface RegistrationData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  organizationName: string;
-  organizationEmail: string;
-  subDomain: string;
-}
+import {
+  LoginCredentials,
+  LoginResponse,
+  User as UserData,
+  RegistrationData,
+  ProfileUpdateData,
+} from "@/types/auth";
 
 // Enhanced auth service implementation
 const authService: AuthService = {
@@ -51,11 +23,9 @@ const authService: AuthService = {
         password: credentials.password,
       });
 
-      // Store tokens using token manager
-      await defaultTokenManager.setTokens(
-        response.access_token,
-        response.refresh_token
-      );
+      // Store tokens in localStorage or secure storage
+      setToStorage("auth_token", response.access_token);
+      setToStorage("refresh_token", response.refresh_token);
 
       // Return the expected format for backwards compatibility
       return {
@@ -105,39 +75,23 @@ const authService: AuthService = {
     }
   },
 
-  // Check if user is authenticated (async - preferred method)
-  isAuthenticated: async (): Promise<boolean> => {
+  // Update user profile
+  updateProfile: async (data: ProfileUpdateData): Promise<UserData> => {
     try {
-      return await defaultTokenManager.isAuthenticated();
+      const response = await apiClient.put<UserData>("/users/profile", {
+        first_name: data.firstName,
+        last_name: data.lastName,
+      });
+      return response;
     } catch (error) {
-      console.warn("Error checking authentication status:", error);
-      return false;
+      console.error("Profile update failed:", error);
+      throw error;
     }
   },
 
-  // DEPRECATED: Synchronous authentication check for backward compatibility
-  // This method provides a fallback for code that hasn't been migrated to async yet
-  // It performs a basic token existence check without validation
-  // TODO: Remove this method after all code is migrated to use async isAuthenticated()
-  isAuthenticatedSync: (): boolean => {
-    console.warn(
-      "authService.isAuthenticatedSync() is deprecated. " +
-        "Please use 'await authService.isAuthenticated()' instead. " +
-        "This synchronous method only checks token presence, not validity."
-    );
-
-    try {
-      // Basic synchronous check - only verifies token exists, not if it's valid
-      if (typeof window === "undefined") return false;
-
-      const accessToken =
-        localStorage.getItem("access_token") ||
-        localStorage.getItem("auth_token");
-      return !!accessToken;
-    } catch (error) {
-      console.warn("Error in synchronous auth check:", error);
-      return false;
-    }
+  // Check if user is authenticated
+  isAuthenticated: (): boolean => {
+    return !!getFromStorage("auth_token");
   },
 
   // Get current user data

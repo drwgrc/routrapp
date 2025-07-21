@@ -23,11 +23,19 @@ type AuthHandler struct {
 	jwtService *auth.JWTService
 }
 
-// NewAuthHandler creates a new auth handler
+// NewAuthHandler creates a new auth handler with default JWT service
 func NewAuthHandler(db *gorm.DB) *AuthHandler {
 	return &AuthHandler{
 		db:         db,
 		jwtService: auth.DefaultJWTService(),
+	}
+}
+
+// NewAuthHandlerWithJWT creates a new auth handler with provided JWT service
+func NewAuthHandlerWithJWT(db *gorm.DB, jwtService *auth.JWTService) *AuthHandler {
+	return &AuthHandler{
+		db:         db,
+		jwtService: jwtService,
 	}
 }
 

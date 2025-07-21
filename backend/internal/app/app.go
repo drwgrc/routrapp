@@ -9,16 +9,18 @@ import (
 	"routrapp-api/internal/logger"
 	"routrapp-api/internal/middleware"
 	"routrapp-api/internal/models"
+	"routrapp-api/internal/utils/auth"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type App struct {
-	config *config.Config
-	server *http.Server
-	db     *gorm.DB
-	router *gin.Engine
+	config     *config.Config
+	server     *http.Server
+	db         *gorm.DB
+	router     *gin.Engine
+	jwtService *auth.JWTService
 }
 
 func NewApp(cfg *config.Config) (*App, error) {
@@ -50,6 +52,10 @@ func NewApp(cfg *config.Config) (*App, error) {
 	}
 	app.db = db
 	logger.Info("Database connection established")
+
+	// Initialize JWT service with configuration
+	app.jwtService = auth.NewJWTService(cfg.JWT.Secret)
+	logger.Infof("JWT service initialized with secret from configuration")
 
 	// Auto-migrate models in development environment
 	if app.config.Environment == "development" {

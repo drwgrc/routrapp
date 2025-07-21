@@ -2,21 +2,34 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
+import { User, Settings, LogOut, ChevronDown } from "lucide-react";
 
 export function Header() {
   const { user, isAuthenticated } = useAuth();
   const { setTheme, actualTheme } = useTheme();
   const router = useRouter();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
   const handleLogout = () => {
+    setIsUserMenuOpen(false);
     router.push("/logout");
   };
 
   const toggleTheme = () => {
     setTheme(actualTheme === "dark" ? "light" : "dark");
+  };
+
+  const toggleUserMenu = () => {
+    setIsUserMenuOpen(!isUserMenuOpen);
+  };
+
+  // Close menu when clicking outside
+  const closeUserMenu = () => {
+    setIsUserMenuOpen(false);
   };
 
   return (
@@ -109,28 +122,90 @@ export function Header() {
 
           {/* Authentication Section */}
           {isAuthenticated ? (
-            <div className="flex items-center space-x-3">
-              {/* User Info */}
-              {user && (
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold text-sm">
-                    {(user.first_name || user.last_name || user.email || "U")
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
-                  <div className="hidden sm:block">
-                    <p className="text-sm font-medium">{user.email}</p>
-                    <p className="text-xs text-muted-foreground">
+            <div className="relative">
+              {/* User Menu Button */}
+              <button
+                onClick={toggleUserMenu}
+                className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-accent transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                {/* User Avatar */}
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-semibold text-sm">
+                  {(user?.first_name || user?.last_name || user?.email || "U")
+                    .charAt(0)
+                    .toUpperCase()}
+                </div>
+
+                {/* User Info - Hidden on small screens */}
+                {user && (
+                  <div className="hidden sm:block text-left">
+                    <p className="text-sm font-medium truncate max-w-32">
+                      {user.first_name && user.last_name
+                        ? `${user.first_name} ${user.last_name}`
+                        : user.email}
+                    </p>
+                    <p className="text-xs text-muted-foreground capitalize">
                       {user.role || "User"}
                     </p>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Logout Button */}
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                Sign Out
-              </Button>
+                {/* Dropdown Arrow */}
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${isUserMenuOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {/* Dropdown Menu */}
+              {isUserMenuOpen && (
+                <>
+                  {/* Backdrop to close menu */}
+                  <div className="fixed inset-0 z-40" onClick={closeUserMenu} />
+
+                  {/* Menu Content */}
+                  <div className="absolute right-0 mt-2 w-56 bg-popover border rounded-md shadow-lg z-50">
+                    <div className="py-1">
+                      {/* User Info - Always visible in dropdown */}
+                      {user && (
+                        <div className="px-4 py-2 border-b">
+                          <p className="text-sm font-medium">{user.email}</p>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            {user.role || "User"}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Menu Items */}
+                      <Link
+                        href="/profile"
+                        className="flex items-center px-4 py-2 text-sm hover:bg-accent transition-colors"
+                        onClick={closeUserMenu}
+                      >
+                        <User className="mr-3 h-4 w-4" />
+                        View Profile
+                      </Link>
+
+                      <Link
+                        href="/settings"
+                        className="flex items-center px-4 py-2 text-sm hover:bg-accent transition-colors"
+                        onClick={closeUserMenu}
+                      >
+                        <Settings className="mr-3 h-4 w-4" />
+                        Settings
+                      </Link>
+
+                      <div className="border-t my-1" />
+
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-sm hover:bg-accent transition-colors text-left"
+                      >
+                        <LogOut className="mr-3 h-4 w-4" />
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="flex items-center space-x-2">

@@ -15,6 +15,7 @@ import {
   ExtendedAuthContextValue,
   LoginCredentials,
   RegistrationData,
+  ProfileUpdateData,
   User,
 } from "@/types/auth";
 
@@ -177,6 +178,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     },
   });
 
+  // Profile update mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: ProfileUpdateData) => {
+      return await authService.updateProfile(data);
+    },
+    onSuccess: updatedUser => {
+      // Update the user query cache with new data
+      queryClient.setQueryData(queryKeys.auth.user, updatedUser);
+    },
+    onError: error => {
+      console.error("Profile update failed:", error);
+    },
+  });
+
   // Derived state from queries and mutations
   const user = userQuery.data || null;
 
@@ -192,14 +207,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     (tokenBasedAuth === true && userQuery.isLoading) ||
     loginMutation.isPending ||
     logoutMutation.isPending ||
-    registerMutation.isPending;
+    registerMutation.isPending ||
+    updateProfileMutation.isPending;
 
   // Combine all possible errors
   const error =
     userQuery.error ||
     loginMutation.error ||
     logoutMutation.error ||
-    registerMutation.error;
+    registerMutation.error ||
+    updateProfileMutation.error;
   const errorMessage = error instanceof Error ? error.message : null;
 
   // Authentication methods
@@ -215,11 +232,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await registerMutation.mutateAsync(data);
   };
 
+  const updateProfile = async (data: ProfileUpdateData) => {
+    await updateProfileMutation.mutateAsync(data);
+  };
+
   // Clear error function - mutation reset functions are stable
   const clearError = () => {
     loginMutation.reset();
     logoutMutation.reset();
     registerMutation.reset();
+    updateProfileMutation.reset();
   };
 
   const refreshUser = async () => {
@@ -242,6 +264,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     login,
     logout,
     register,
+    updateProfile,
     clearError,
     refreshUser,
     // Additional utilities - properly typed

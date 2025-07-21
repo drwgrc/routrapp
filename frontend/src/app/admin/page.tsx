@@ -1,5 +1,5 @@
 import {
-  OwnerPage,
+  OwnerPageWithLayout,
   AdminOnly,
   ManagementOnly,
   RoleVisibility,
@@ -18,7 +18,7 @@ import {
 
 export default function AdminDashboard() {
   return (
-    <OwnerPage
+    <OwnerPageWithLayout
       title="Admin Dashboard"
       description="Manage your organization, users, and routes"
     >
@@ -148,7 +148,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-    </OwnerPage>
+    </OwnerPageWithLayout>
   );
 }
 
