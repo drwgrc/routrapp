@@ -33,6 +33,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const queryClient = useQueryClient();
   const [isMounted, setIsMounted] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [tokenBasedAuth, setTokenBasedAuth] = useState<boolean | null>(null);
 
   // Set mounted state after hydration to prevent SSR mismatch
   useEffect(() => {
@@ -54,19 +55,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
           },
           onRefreshFailed: error => {
             console.warn("Token refresh failed:", error);
+            // Update token-based auth state
+            setTokenBasedAuth(false);
             // Clear user data from cache
             queryClient.setQueryData(queryKeys.auth.user, null);
           },
           onTokenExpired: () => {
             console.warn("Token expired");
+            // Update token-based auth state
+            setTokenBasedAuth(false);
             // Clear user data and potentially redirect
             queryClient.setQueryData(queryKeys.auth.user, null);
           },
         });
 
+        // Check initial authentication state based on tokens
+        const isAuth = await authService.isAuthenticated();
+        setTokenBasedAuth(isAuth);
         setIsInitialized(true);
       } catch (error) {
         console.error("Failed to initialize auth:", error);
+        setTokenBasedAuth(false);
         setIsInitialized(true); // Still mark as initialized to prevent blocking
       }
     };
@@ -74,21 +83,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initializeAuth();
   }, [isMounted, queryClient]);
 
-  // Query for current user data - this handles authentication status internally
+  // Query for current user data - this runs independently of authentication status
   const userQuery = useQuery({
     queryKey: queryKeys.auth.user,
     queryFn: async (): Promise<User | null> => {
-      if (!isMounted || !isInitialized) {
+      if (!isMounted || !isInitialized || tokenBasedAuth === false) {
         return null;
       }
 
       try {
-        // Check authentication status first
-        const isAuth = await authService.isAuthenticated();
-        if (!isAuth) {
-          return null;
-        }
-
         return await authService.getCurrentUser();
       } catch (error) {
         // Handle different error types
@@ -99,12 +102,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
           : undefined;
 
         if (status === 401) {
-          // Token issues - let token manager handle this
+          // Token issues - update token-based auth state
           console.warn("Authentication failed during user fetch");
+          setTokenBasedAuth(false);
           return null;
         }
 
-        // For other errors, log and return null
+        // For other errors (network, server issues), log and return null
+        // but don't mark user as unauthenticated if we have valid tokens
         console.error("Failed to get user data:", error);
         return null;
       }
@@ -119,7 +124,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return status !== 401 && status !== 403 && failureCount < 2;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: isMounted && isInitialized, // Only run if mounted and initialized
+    enabled: isMounted && isInitialized && tokenBasedAuth === true, // Only run if we have valid tokens
     refetchOnWindowFocus: false, // Disable to reduce unnecessary requests
     refetchOnReconnect: true, // Re-fetch when connection is restored
   });
@@ -131,13 +136,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return response.user;
     },
     onSuccess: user => {
+      // Update token-based auth state
+      setTokenBasedAuth(true);
       // Update the user query cache
       queryClient.setQueryData(queryKeys.auth.user, user);
       // Invalidate to ensure fresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.auth.user });
     },
     onError: () => {
-      // Clear user data on login failure
+      // Update auth states on login failure
+      setTokenBasedAuth(false);
       queryClient.setQueryData(queryKeys.auth.user, null);
     },
   });
@@ -148,13 +156,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await authService.logout();
     },
     onSuccess: () => {
+      // Update token-based auth state
+      setTokenBasedAuth(false);
       // Clear all auth-related cached data on successful logout
       queryClient.removeQueries({ queryKey: ["auth"] });
     },
     onError: error => {
       // Log error but still clear local cache
       console.error("Logout failed:", error);
-      // Clear cache anyway for security
+      // Update auth states anyway for security
+      setTokenBasedAuth(false);
       queryClient.removeQueries({ queryKey: ["auth"] });
     },
   });
@@ -169,13 +180,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Derived state from queries and mutations
   const user = userQuery.data || null;
 
-  // Simplified authentication state derived from user query
-  const isAuthenticated = !!user && !userQuery.isError;
+  // Robust authentication state that prioritizes token validity over user data fetching success
+  // This prevents false unauthenticated states when user data fetch fails but tokens are valid
+  const isAuthenticated = tokenBasedAuth === true;
 
+  // Loading state includes token-based auth check and user data fetching when appropriate
   const isLoading =
     !isMounted ||
     !isInitialized ||
-    userQuery.isLoading ||
+    tokenBasedAuth === null ||
+    (tokenBasedAuth === true && userQuery.isLoading) ||
     loginMutation.isPending ||
     logoutMutation.isPending ||
     registerMutation.isPending;
@@ -209,7 +223,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const refreshUser = async () => {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.auth.user });
+    // Re-check token-based authentication first
+    const isAuth = await authService.isAuthenticated();
+    setTokenBasedAuth(isAuth);
+
+    // If still authenticated, refresh user data
+    if (isAuth) {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.auth.user });
+    }
   };
 
   // Enhanced context value with additional utilities
