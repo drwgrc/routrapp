@@ -1,7 +1,20 @@
-import { TechnicianPage, PermissionGuard } from "@/components/auth";
+import {
+  TechnicianPage,
+  PermissionGuard,
+  RoleVisibility,
+  PermissionVisibility,
+  ReadOnly,
+} from "@/components/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  MapPin,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Eye,
+  Route,
+} from "lucide-react";
 
 export default function TechnicianDashboard() {
   return (
@@ -36,10 +49,13 @@ export default function TechnicianDashboard() {
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 mt-6">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
         <Card>
           <CardHeader>
-            <CardTitle>Current Route</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Route className="h-4 w-4" />
+              Current Route
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -70,7 +86,10 @@ export default function TechnicianDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Today&apos;s Schedule</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Today&apos;s Schedule
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -95,6 +114,60 @@ export default function TechnicianDashboard() {
                 status="pending"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              Access Control
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <RoleVisibility allowedRoles={["technician"]}>
+              <div className="p-3 border rounded-lg bg-blue-50">
+                <p className="text-sm font-medium text-blue-800">
+                  ✅ Technician Access
+                </p>
+                <p className="text-xs text-blue-600">
+                  You have technician privileges
+                </p>
+              </div>
+            </RoleVisibility>
+
+            <PermissionVisibility requiredPermissions={["routes.read"]}>
+              <div className="p-3 border rounded-lg bg-green-50">
+                <p className="text-sm font-medium text-green-800">
+                  ✅ Route Access
+                </p>
+                <p className="text-xs text-green-600">
+                  You can view and manage routes
+                </p>
+              </div>
+            </PermissionVisibility>
+
+            <ReadOnly>
+              <div className="p-3 border rounded-lg bg-gray-50">
+                <p className="text-sm font-medium text-gray-800">
+                  ✅ Read Access
+                </p>
+                <p className="text-xs text-gray-600">
+                  You have read-only access to data
+                </p>
+              </div>
+            </ReadOnly>
+
+            <RoleVisibility allowedRoles={["owner"]}>
+              <div className="p-3 border rounded-lg bg-red-50">
+                <p className="text-sm font-medium text-red-800">
+                  ❌ Owner Content
+                </p>
+                <p className="text-xs text-red-600">
+                  This won&apos;t show for technicians
+                </p>
+              </div>
+            </RoleVisibility>
           </CardContent>
         </Card>
       </div>

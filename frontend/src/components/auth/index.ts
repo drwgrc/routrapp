@@ -23,3 +23,27 @@ export {
 export { AuthErrorBoundary, useAuthErrorBoundary } from "./auth-error-boundary";
 export { ClientOnly } from "./client-only";
 export { ClientAuthWrapper } from "./client-wrapper";
+
+// Advanced visibility components
+export {
+  RoleVisibility,
+  PermissionVisibility,
+  CombinedVisibility,
+  ConditionalVisibility,
+  FeatureFlag,
+  AdminOnly,
+  ManagementOnly,
+  ReadOnly,
+} from "./visibility-guard";
+
+// Conditional rendering components with loading states
+export {
+  RoleConditionalRender,
+  PermissionConditionalRender,
+  CombinedConditionalRender,
+  CustomConditionalRender,
+  SuspenseConditionalRender,
+  AdminConditionalRender,
+  ManagementConditionalRender,
+  ReadOnlyConditionalRender,
+} from "./conditional-render";
