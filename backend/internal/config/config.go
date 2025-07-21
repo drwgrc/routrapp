@@ -14,6 +14,7 @@ import (
 type Config struct {
 	Server      ServerConfig   `yaml:"server"`
 	CORS        CORSConfig     `yaml:"cors"`
+	JWT         JWTConfig      `yaml:"jwt"`
 	Database    DatabaseConfig `yaml:"database"`
 	Environment string
 }
@@ -28,6 +29,12 @@ type CORSConfig struct {
 	FrontendURL string `yaml:"frontend_url"`
 }
 
+type JWTConfig struct {
+	Secret              string `yaml:"secret"`
+	AccessTokenExpiry   int    `yaml:"access_token_expiry"`   // in seconds
+	RefreshTokenExpiry  int    `yaml:"refresh_token_expiry"`  // in seconds
+}
+
 // Load loads the configuration from YAML files with environment variable expansion for production
 func Load() *Config {
 	config := &Config{
@@ -38,6 +45,11 @@ func Load() *Config {
 		},
 		CORS: CORSConfig{
 			FrontendURL: constants.DefaultFrontendURL,
+		},
+		JWT: JWTConfig{
+			Secret:             constants.DEFAULT_JWT_SECRET,
+			AccessTokenExpiry:  constants.JWT_ACCESS_TOKEN_EXPIRY,
+			RefreshTokenExpiry: constants.JWT_REFRESH_TOKEN_EXPIRY,
 		},
 		Database: DatabaseConfig{
 			Host:         constants.DefaultDBHost,
@@ -87,6 +99,7 @@ func Load() *Config {
 func expandEnvVars(c *Config) {
 	c.Server.Port = os.ExpandEnv(c.Server.Port)
 	c.CORS.FrontendURL = os.ExpandEnv(c.CORS.FrontendURL)
+	c.JWT.Secret = os.ExpandEnv(c.JWT.Secret)
 	c.Database.Host = os.ExpandEnv(c.Database.Host)
 	c.Database.Port = os.ExpandEnv(c.Database.Port)
 	c.Database.User = os.ExpandEnv(c.Database.User)
