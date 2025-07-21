@@ -10,8 +10,8 @@ func (a *App) RegisterRoutes() {
 	// Health check endpoint
 	healthHandler := api.NewHealthHandler(a.db)
 
-	// User handler for testing error scenarios
-	userHandler := api.NewUserHandler()
+	// User handler
+	userHandler := api.NewUserHandler(a.db)
 
 	// Auth handler
 	authHandler := api.NewAuthHandler(a.db)
@@ -37,13 +37,14 @@ func (a *App) RegisterRoutes() {
 				auth.POST("/change-password", middleware.AuthMiddleware(), authHandler.ChangePassword) // POST /api/v1/auth/change-password (requires auth)
 			}
 
-			// User endpoints for testing error scenarios
+			// User endpoints
 			users := v1.Group("/users")
 			{
-				users.GET("", userHandler.GetUsers)                    // GET /api/v1/users
-				users.POST("", userHandler.CreateUser)                // POST /api/v1/users
-				users.GET("/", userHandler.GetUserWithEmptyID)        // GET /api/v1/users/ - Bad request
-				users.GET("/:id", userHandler.GetUser)                // GET /api/v1/users/:id
+				users.GET("", userHandler.GetUsers)                                                 // GET /api/v1/users
+				users.POST("", userHandler.CreateUser)                                             // POST /api/v1/users
+				users.GET("/", userHandler.GetUserWithEmptyID)                                     // GET /api/v1/users/ - Bad request
+				users.GET("/:id", userHandler.GetUser)                                             // GET /api/v1/users/:id
+				users.PUT("/profile", middleware.AuthMiddleware(), userHandler.UpdateProfile)     // PUT /api/v1/users/profile (requires auth)
 			}
 			
 			// Panic endpoint for testing recovery middleware

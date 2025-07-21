@@ -33,6 +33,11 @@ interface RegistrationData {
   subDomain: string;
 }
 
+interface ProfileUpdateData {
+  firstName?: string;
+  lastName?: string;
+}
+
 // Helper function to safely access localStorage
 const getFromStorage = (key: string): string | null => {
   if (typeof window === "undefined") return null;
@@ -114,6 +119,20 @@ const authService = {
       return response;
     } catch (error) {
       console.error("Registration failed:", error);
+      throw error;
+    }
+  },
+
+  // Update user profile
+  updateProfile: async (data: ProfileUpdateData): Promise<UserData> => {
+    try {
+      const response = await apiClient.put<UserData>("/users/profile", {
+        first_name: data.firstName,
+        last_name: data.lastName,
+      });
+      return response;
+    } catch (error) {
+      console.error("Profile update failed:", error);
       throw error;
     }
   },
