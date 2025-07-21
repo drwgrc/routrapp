@@ -42,19 +42,19 @@ export default function ProfilePage() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.firstName.trim()) {
+    // Validate first name
+    const trimmedFirstName = formData.firstName.trim();
+    if (!trimmedFirstName) {
       newErrors.firstName = "First name is required";
-    } else if (formData.firstName.trim().length < 1) {
-      newErrors.firstName = "First name must be at least 1 character";
-    } else if (formData.firstName.trim().length > 100) {
+    } else if (trimmedFirstName.length > 100) {
       newErrors.firstName = "First name must be less than 100 characters";
     }
 
-    if (!formData.lastName.trim()) {
+    // Validate last name
+    const trimmedLastName = formData.lastName.trim();
+    if (!trimmedLastName) {
       newErrors.lastName = "Last name is required";
-    } else if (formData.lastName.trim().length < 1) {
-      newErrors.lastName = "Last name must be at least 1 character";
-    } else if (formData.lastName.trim().length > 100) {
+    } else if (trimmedLastName.length > 100) {
       newErrors.lastName = "Last name must be less than 100 characters";
     }
 
