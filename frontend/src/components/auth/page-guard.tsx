@@ -229,3 +229,41 @@ export function AuthenticatedPage({
     </PageGuard>
   );
 }
+
+/**
+ * AuthenticatedPageWithLayout Component
+ *
+ * Authenticated page with proper layout (header, sidebar, footer) for all authenticated users.
+ * Accessible to any authenticated user regardless of role.
+ */
+export function AuthenticatedPageWithLayout({
+  children,
+  title,
+  description,
+  redirectTo = "/login",
+}: {
+  children: React.ReactNode;
+  title?: string;
+  description?: string;
+  redirectTo?: string;
+}) {
+  return (
+    <AuthenticatedPage redirectTo={redirectTo}>
+      <MainLayout>
+        <div className="page-container">
+          {(title || description) && (
+            <div className="page-header mb-6">
+              {title && (
+                <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+              )}
+              {description && (
+                <p className="text-muted-foreground mt-2">{description}</p>
+              )}
+            </div>
+          )}
+          {children}
+        </div>
+      </MainLayout>
+    </AuthenticatedPage>
+  );
+}

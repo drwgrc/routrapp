@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MainLayout } from "@/components/layout";
+import { AuthenticatedPageWithLayout } from "@/components/auth";
 import {
   Card,
   CardContent,
@@ -71,18 +71,11 @@ export default function Home() {
   }, []);
 
   return (
-    <MainLayout>
+    <AuthenticatedPageWithLayout
+      title="Welcome to RoutrApp"
+      description="Your route optimization platform for utility and trade companies."
+    >
       <div className="space-y-6">
-        {/* Welcome Section */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">
-            Welcome to RoutrApp
-          </h1>
-          <p className="text-muted-foreground">
-            Your route optimization platform for utility and trade companies.
-          </p>
-        </div>
-
         {/* Status Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {/* API Status Card */}
@@ -189,6 +182,6 @@ export default function Home() {
           </CardContent>
         </Card>
       </div>
-    </MainLayout>
+    </AuthenticatedPageWithLayout>
   );
 }

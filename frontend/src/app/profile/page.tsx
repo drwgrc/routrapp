@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { AuthenticatedPageWithLayout } from "@/components/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,16 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 import { toast } from "sonner";
-import {
-  ArrowLeft,
-  User,
-  Mail,
-  Shield,
-  Calendar,
-  Edit3,
-  Save,
-  X,
-} from "lucide-react";
+import { User, Mail, Shield, Calendar, Edit3, Save, X } from "lucide-react";
 import Link from "next/link";
 
 export default function ProfilePage() {
@@ -128,34 +120,20 @@ export default function ProfilePage() {
 
   if (isLoading || !user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="flex items-center justify-center p-4">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-6">
-          <Link
-            href="/"
-            className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 mb-4"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Link>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            User Profile
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Manage your account information and settings
-          </p>
-        </div>
-
+    <AuthenticatedPageWithLayout
+      title="User Profile"
+      description="Manage your account information and settings"
+    >
+      <div className="space-y-6">
         {/* Profile Information Card */}
-        <Card className="mb-6">
+        <Card>
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -277,7 +255,7 @@ export default function ProfilePage() {
         </Card>
 
         {/* Account Information Card */}
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center text-lg">
               <Shield className="mr-2 h-5 w-5" />
@@ -377,6 +355,6 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AuthenticatedPageWithLayout>
   );
 }

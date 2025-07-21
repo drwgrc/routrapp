@@ -15,6 +15,7 @@ export {
   HierarchicalTechnicianPage,
   TechnicianPageWithLayout,
   OwnerPageWithLayout,
+  AuthenticatedPageWithLayout,
 } from "./page-guard";
 export {
   AuthMiddleware,

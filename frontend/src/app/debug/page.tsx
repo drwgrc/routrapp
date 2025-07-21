@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { AuthenticatedPageWithLayout } from "@/components/auth";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -101,25 +102,20 @@ export default function DebugPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">
-            Authentication Debug
-          </h1>
-          <p className="mt-2 text-gray-600">
-            Debug authentication tokens and user state
-          </p>
-          <div className="mt-4">
-            <Link href="/" className="text-blue-600 hover:text-blue-800">
-              ← Back to Dashboard
-            </Link>
-          </div>
+    <AuthenticatedPageWithLayout
+      title="Authentication Debug"
+      description="Debug authentication tokens and user state"
+    >
+      <div className="space-y-6">
+        {/* Back link */}
+        <div>
+          <Link href="/" className="text-blue-600 hover:text-blue-800">
+            ← Back to Dashboard
+          </Link>
         </div>
 
         {/* User Status */}
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
             <CardTitle>Authentication Status</CardTitle>
             <CardDescription>Current user authentication state</CardDescription>
@@ -171,7 +167,7 @@ export default function DebugPage() {
         </Card>
 
         {/* Token Management */}
-        <Card className="mb-6">
+        <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Token Management
@@ -306,6 +302,6 @@ export default function DebugPage() {
           </Card>
         )}
       </div>
-    </div>
+    </AuthenticatedPageWithLayout>
   );
 }
