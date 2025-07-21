@@ -41,6 +41,7 @@ export class AuthErrorBoundary extends Component<
     const authError: AuthError = {
       type: "UNKNOWN",
       message: error.message,
+      code: "UNKNOWN_ERROR",
     };
 
     // Try to determine error type from error message or properties
