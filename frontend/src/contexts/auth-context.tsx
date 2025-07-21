@@ -49,6 +49,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         defaultTokenManager.setEventHandlers({
           onTokenRefreshed: () => {
             console.log("Token refreshed successfully");
+            // Refresh user data after token refresh
+            queryClient.invalidateQueries({ queryKey: queryKeys.auth.user });
           },
           onRefreshFailed: error => {
             console.warn("Token refresh failed:", error);
@@ -72,7 +74,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initializeAuth();
   }, [isMounted, queryClient]);
 
-  // Query for current user data
+  // Query for current user data - this handles authentication status internally
   const userQuery = useQuery({
     queryKey: queryKeys.auth.user,
     queryFn: async (): Promise<User | null> => {
@@ -167,36 +169,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Derived state from queries and mutations
   const user = userQuery.data || null;
 
-  // Enhanced authentication check that considers async nature
-  const [authStatus, setAuthStatus] = useState<
-    "checking" | "authenticated" | "unauthenticated"
-  >("checking");
-
-  useEffect(() => {
-    if (!isMounted || !isInitialized) {
-      setAuthStatus("checking");
-      return;
-    }
-
-    const checkAuth = async () => {
-      try {
-        const isAuth = await authService.isAuthenticated();
-        setAuthStatus(isAuth ? "authenticated" : "unauthenticated");
-      } catch (error) {
-        console.warn("Error checking auth status:", error);
-        setAuthStatus("unauthenticated");
-      }
-    };
-
-    checkAuth();
-  }, [isMounted, isInitialized]); // Removed 'user' dependency to prevent infinite loop
-
-  const isAuthenticated = authStatus === "authenticated";
+  // Simplified authentication state derived from user query
+  const isAuthenticated = !!user && !userQuery.isError;
 
   const isLoading =
     !isMounted ||
     !isInitialized ||
-    authStatus === "checking" ||
     userQuery.isLoading ||
     loginMutation.isPending ||
     logoutMutation.isPending ||
@@ -245,7 +223,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     register,
     clearError,
     refreshUser,
-    // Additional utilities
+    // Additional utilities - properly typed
     getTokenInfo: authService.getTokenInfo,
     refreshToken: authService.refreshToken,
   };
