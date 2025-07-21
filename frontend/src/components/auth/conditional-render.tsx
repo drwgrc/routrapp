@@ -22,14 +22,20 @@ function LoadingFallback({ children, className = "" }: LoadingFallbackProps) {
 // Error component for visibility checks
 interface ErrorFallbackProps {
   message?: string;
+  children?: ReactNode;
   className?: string;
 }
 
 function ErrorFallback({
   message = "Access denied",
+  children,
   className = "",
 }: ErrorFallbackProps) {
-  return <div className={`text-red-600 text-sm ${className}`}>{message}</div>;
+  return (
+    <div className={`text-red-600 text-sm ${className}`}>
+      {children || message}
+    </div>
+  );
 }
 
 // Base interface for conditional render props
@@ -96,11 +102,11 @@ export function RoleConditionalRender({
 
   // Show error state if there's an auth error and showOnError is false
   if (error && !showOnError) {
+    if (errorFallback) {
+      return <div className={className}>{errorFallback}</div>;
+    }
     return (
-      <ErrorFallback
-        message={(errorFallback as string) || "Authentication error"}
-        className={className}
-      />
+      <ErrorFallback message="Authentication error" className={className} />
     );
   }
 
@@ -144,11 +150,11 @@ export function PermissionConditionalRender({
 
   // Show error state if there's an auth error and showOnError is false
   if (error && !showOnError) {
+    if (errorFallback) {
+      return <div className={className}>{errorFallback}</div>;
+    }
     return (
-      <ErrorFallback
-        message={(errorFallback as string) || "Authentication error"}
-        className={className}
-      />
+      <ErrorFallback message="Authentication error" className={className} />
     );
   }
 
@@ -196,11 +202,11 @@ export function CombinedConditionalRender({
 
   // Show error state if there's an auth error and showOnError is false
   if (error && !showOnError) {
+    if (errorFallback) {
+      return <div className={className}>{errorFallback}</div>;
+    }
     return (
-      <ErrorFallback
-        message={(errorFallback as string) || "Authentication error"}
-        className={className}
-      />
+      <ErrorFallback message="Authentication error" className={className} />
     );
   }
 
@@ -260,11 +266,11 @@ export function CustomConditionalRender({
 
   // Show error state if there's an auth error and showOnError is false
   if (error && !showOnError) {
+    if (errorFallback) {
+      return <div className={className}>{errorFallback}</div>;
+    }
     return (
-      <ErrorFallback
-        message={(errorFallback as string) || "Authentication error"}
-        className={className}
-      />
+      <ErrorFallback message="Authentication error" className={className} />
     );
   }
 
